@@ -1,0 +1,3288 @@
+---
+title: "Appendix B: Can Media Campaigns Empower Women Facing Gender-Based Violence amid COVID-19? All Treatments indicators Separate. Violence against Women in the Time of COVID-19 (Facebook and WhatsApp Indicators pooled)."
+author: ""
+date: "6/6/2021"
+geometry: margin=1in
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding,
+  output_dir = "Results/Online Appendix B", output_format = "all") })
+output:
+  pdf_document:
+    extra_dependencies: "subfig"
+    dev: cairo_pdf
+    keep_tex: true
+    fig_caption: true        
+header-includes:
+   - \usepackage{rotating, graphicx, floatrow, siunitx, subfig, booktabs, ragged2e}   
+   - \captionsetup[subfigure]{labelfont = {bf, small}, font = small}
+   - \floatsetup[figure]{capposition=top}
+   - \floatsetup[table]{capposition=top}
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+
+knitr::opts_knit$set(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+rm(list = ls())
+```
+
+```{r packages, include=FALSE}
+library(stargazer)
+library(car) # Linear Hypothesis
+library(tidyr) # replace_na function
+library(extrafont) # Use Arial font
+library(ggplot2)
+
+```
+
+```{r include=FALSE}
+setwd('..')
+# Read the merged data with codede baseline and endline responses
+merged <- read.csv('Datasets/Finaldata/Finaldata.csv')
+
+```
+
+```{r include=FALSE}
+
+# Set the common covariates labels for all tables
+cov_var <- c("Facebook, \\\\ WhatsApp Ind., and\\\\ WhatsApp Group", "TV Show Reminder")
+
+```
+
+
+```{r include=FALSE}
+setwd('..')
+# Demographic and Income Variables ------------------------------------------------------------
+
+# B2 - Age
+# B3 - Social Status
+# B4 - Age Husb
+# B5 - Years married
+# B6 - Husb lives home
+# B7 - Male Children Living Home
+# B8 - Female Children Living Home
+# B9 - Family Members Living at Home
+# B10 - Education
+# B11 - Husb Education
+# B12 - Bc Main Activity
+# B13 - Bc Husb Main Activity
+# B14 - Dc Main Activity
+# B15 - BC Main Activity
+# B16 - Covid Income Decline
+
+
+# NA treatment
+merged$male_children[is.na(merged$male_children)] <- 0 
+merged$female_children[is.na(merged$female_children)] <- 0 
+
+
+demo_data <- merged[c("age", "ba_above", "male_children", "female_children", "sum_family_mem")]
+
+
+demo_means <- round(colMeans(demo_data), digits = 3)
+
+demo_control <- round(colMeans(demo_data[which(merged$control_10018 == 1),]), digits = 3)
+
+
+age <- lm(age ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+          weights = weight, data = merged)
+
+ba <- lm(ba_above ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+         weights = weight, data = merged)
+
+male_c <- lm(male_children ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+             weights = weight, data = merged)
+
+female_c <- lm(female_children ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+               weights = weight, data = merged)
+
+sum_fam_mem <- lm(sum_family_mem ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                  weights = weight, data = merged)
+
+
+dep_var_demo <- c("Age", 
+                  "\\shortstack{Education \\\\ (BA)}", 
+                  "\\shortstack{Number \\\\ of male \\\\ children}", 
+                  "\\shortstack{Number \\\\ of female \\\\ children}", 
+                  "\\shortstack{Other \\\\ family \\\\members}")
+
+
+Table1A <- stargazer(age, ba, male_c, female_c, sum_fam_mem,
+                      header=FALSE,          
+                      font.size="footnotesize",
+                      dep.var.labels.include = FALSE,
+                      table.placement = "H",
+                      column.labels=dep_var_demo,
+                      covariate.labels= cov_var,
+                      omit = c("Constant","block_ids"), 
+                      omit.stat=c("f", "ser","adj.rsq"), 
+                      add.lines = list(c("Control Mean", demo_control)),
+                      column.sep.width = "2pt",
+                      title = "Balance on demographics variables",
+                      type = "latex")
+
+
+note.latex <- "\\multicolumn{6}{l} {\\parbox[t]{11cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment assignment, 
+including randomization block fixed effects. * denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table1A[grepl("Note", Table1A)] <- note.latex
+
+
+
+#---------------------------------------------------------------------------------------------------
+
+husb_data <- merged[c("married", "husb_age", "length_marriage", "husb_live_loc_num", "education_husb_num")]
+
+# there are 6 NA answers in husband age of those women married
+sum(!is.na(merged$husb_age))
+
+
+husb_means <- round(colMeans(husb_data, na.rm = TRUE), digits = 3)
+
+husb_control <- round(colMeans(husb_data[which(merged$control_10018 == 1),], na.rm = TRUE), digits = 3)
+
+
+married <- lm(married ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+              weights = weight, data = merged)
+
+h_age <- lm(husb_age ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+            weights = weight, data = merged)
+
+educ_husb <- lm(education_husb_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                weights = weight, data = merged)
+
+length_marriage <- lm(length_marriage ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                      weights = weight, data = merged)
+
+husb_liv <- lm(husb_live_loc_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+               weights = weight, data = merged)
+
+
+husb_var <- c("Married", 
+              "Age", 
+              "\\shortstack{Education \\\\(BA)}",
+              "\\shortstack{Marriage \\\\ duration}", 
+              "\\shortstack{Husband \\\\ lives \\\\ at home}")
+
+
+Table1B <- stargazer(married, h_age, educ_husb, length_marriage, husb_liv, 
+                      header=FALSE,          
+                      font.size="footnotesize",
+                      dep.var.labels.include = FALSE,
+                      table.placement = "H",
+                      column.labels=husb_var,
+                      covariate.labels= cov_var,
+                      omit = c("Constant","block_ids"), 
+                      omit.stat=c("f", "ser","adj.rsq"), 
+                      add.lines = list(c("Control Mean", husb_control)),
+                      column.sep.width = "2pt",
+                      title = "Balance on husband variables",
+                      type = "latex")
+
+
+note.latex <- "\\multicolumn{6}{l} {\\parbox[t]{11cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment assignment, 
+including randomization block fixed effects. * denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table1B[grepl("Note", Table1B)] <- note.latex
+
+
+
+# ---------------------------------------------------------------------------------------------
+
+
+covid_data <- merged[c("bcovid_activity_num", "bcovid_activity_ph_num" , 
+                       "bcovid_act_husbmar_num","bcovid_activity_husbmar_ph_num",
+                       "dcovid_activity_num","dcovid_activity_ph_num",
+                       "dcovid_activity_husb_num", "dcovid_activity_husbmar_ph_num",
+                       "covid_inc_decline")]
+
+covid_means <- round(colMeans(covid_data, na.rm = TRUE), digits = 3)
+
+covid_control <- round(colMeans(covid_data[which(merged$control_10018 == 1),], na.rm = TRUE), digits = 3)
+
+
+bcovid_act <- lm(bcovid_activity_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                 weights = weight, data = merged)
+
+bcovid_ph <- lm(bcovid_activity_ph_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                weights = weight, data = merged)
+
+bcovid_act_husb <- lm(bcovid_act_husbmar_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                      weights = weight, data = merged)
+
+
+
+bcovid_ph_husb <- lm(bcovid_activity_husbmar_ph_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                     weights = weight, data = merged)
+
+dcovid_act <- lm(dcovid_activity_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                 weights = weight, data = merged)
+
+
+dcovid_ph <- lm(dcovid_activity_ph_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                weights = weight, data = merged)
+
+dcovid_act_husb <- lm(dcovid_activity_husb_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                      weights = weight, data = merged)
+
+dcovid_ph_husb <- lm(dcovid_activity_husbmar_ph_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                     weights = weight, data = merged)
+
+covid_inc <- lm(covid_inc_decline ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                weights = weight, data = merged)
+
+covid_var <- c("\\shortstack{Full time\\\\ at home}", 
+               "\\shortstack{Partially\\\\ at home}", 
+               "\\shortstack{Husband \\\\full time \\\\at home}", 
+               "\\shortstack{Husband \\\\ partially\\\\ at home}", 
+               "\\shortstack{Full time \\\\at home}", 
+               "\\shortstack{Partially\\\\ at Home}", 
+               "\\shortstack{Husband \\\\full time \\\\at home}", 
+               "\\shortstack{Husband \\\\partially\\\\ at home}",
+               "\\shortstack{COVID-19 \\\\income \\\\decline}")
+
+
+Table2 <- stargazer(bcovid_act, bcovid_ph, bcovid_act_husb, bcovid_ph_husb, 
+                     dcovid_act, dcovid_ph, dcovid_act_husb, dcovid_ph_husb, 
+                     covid_inc,
+                     header=FALSE,          
+                     font.size="footnotesize",
+                     dep.var.labels.include = FALSE,
+                     #                   model.numbers          = FALSE,
+                     table.placement = "H",
+                     column.labels=covid_var,
+                     covariate.labels= cov_var,
+                     omit = c("Constant","block_ids"), 
+                     omit.stat=c("f", "ser","adj.rsq"), 
+                     add.lines = list(c("Control Mean", covid_control)),
+                     column.sep.width = "2pt",
+                     title = "Balance on before and during COVID-19 home presence of respondent and husband, and whether household income declined with COVID-19",
+                     type = "latex")
+
+
+note.latex <- "\\multicolumn{10}{l} {\\parbox[t]{18cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment assignment, 
+including randomization block fixed effects. * denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table2[grepl("Note", Table2)] <- note.latex
+
+
+
+# TV Show Variables Variables treatment Balance Table ----------------------------------------------------
+# B17 - Watch TV Morning - 
+# B18 - Own TV Sattelite
+# B19 - Channels of Nehad's Show
+# B20 - Nehad's Show Type
+# B21 - Watched Nehad's show Sat
+
+
+TV_data <- merged[c("tv_morning_num", "tv_afternoon_num",  
+                    "tv_evening_num", "tv_sattelite_num",
+                    "tv_top3_chan_num",
+                    "tv_top3_shows_num", "sat_show_num")]
+
+TV_means <- round(colMeans(TV_data), digits = 3)
+
+TV_control <- round(colMeans(TV_data[which(merged$control_10018 == 1),]), digits = 3)
+
+tv_morning <- lm(tv_morning_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                 weights = weight, data = merged)
+
+tv_afternoon <- lm(tv_afternoon_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                   weights = weight, data = merged)
+
+tv_evening <- lm(tv_evening_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                 weights = weight, data = merged)
+
+tv_sattelite <- lm(tv_sattelite_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                   weights = weight, data = merged)
+
+tv_top3_chan <- lm(tv_top3_chan_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                   weights = weight, data = merged)
+
+tv_top3_shows <- lm(tv_top3_shows_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                    weights = weight, data = merged)
+
+sat_show <- lm(sat_show_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+               weights = weight, data = merged)
+
+
+
+dep_var_tv <- c("\\shortstack{Watches TV \\\\morning}", 
+                "\\shortstack{Watches TV \\\\afternoon}", 
+                "\\shortstack{Watches TV \\\\evening}", 
+                "\\shortstack{Own TV \\\\satellite}",
+                "\\shortstack{Watches Channels \\\\ of TV show}", 
+                "\\shortstack{Watches TV\\\\show type}", 
+                "\\shortstack{Mentioned \\\\watched TV \\\\show Saturday \\\\evening}")
+
+
+Table3 <- stargazer( tv_morning, tv_afternoon, tv_evening, tv_sattelite,
+                      tv_top3_chan, tv_top3_shows, sat_show, 
+                      header=FALSE,          
+                      font.size="footnotesize",
+                      dep.var.labels.include = FALSE,
+                      table.placement = "H",
+                      column.labels=dep_var_tv,
+                      covariate.labels= cov_var,
+                      omit = c("Constant","block_ids"), 
+                      omit.stat=c("f", "ser","adj.rsq"), 
+                      add.lines = list(c("Control Mean",TV_control)),
+                      column.sep.width = "2pt",
+                      title = "Balance on TV show consumption variables",
+                      type = "latex")
+
+
+note.latex <- "\\multicolumn{8}{l} {\\parbox[t]{18cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment assignment, 
+including randomization block fixed effects. * denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table3[grepl("Note", Table3)] <- note.latex
+
+
+
+# Social Media Habits Variables treatment Balance Table ----------------------------------------------------
+# B30 - Hours Spent in Soc Media
+# B31 & 32 - Active Use of [...]
+# [...] = WhatsApp, Facebook, Instagram, YouTube, Twitter, Snapchat, Telegram
+# Facebook and  WhatsApp treatment Balance Table ----------------------------------------------------
+# B33 - Soc Media Videos Received
+# B34 - WhatsApp Videos Received
+
+
+dep_var_Socmed <- c("\\shortstack{Hours spent \\\\ on social \\\\ media}", 
+                    "\\shortstack{Uses \\\\ WhatsApp}", 
+                    "\\shortstack{Uses \\\\ Facebook}", 
+                    "\\shortstack{Uses \\\\ Instagram}", 
+                    "\\shortstack{Uses \\\\ YouTube}", 
+                    "\\shortstack{Uses \\\\ Twitter}", 
+                    "\\shortstack{Uses \\\\ Snapchat}", 
+                    "\\shortstack{Uses \\\\ Telegram}",
+                    "\\shortstack{Watched \\\\videos on\\\\social media}", 
+                    "\\shortstack{Watched \\\\ videos on \\\\ WhatsApp}")
+
+dep_var_sm_data <- merged[c("hours_soc_med_num", "socmed_whatsapp", "socmed_Facebook", "socmed_Instagram",
+                            "socmed_YouTube", "socmed_Twitter", "socmed_Snapchat", "socmed_Telegram",
+                            "X2mos_socmed_dv_num", "X2mos_whatsapp_dv_num")]
+
+
+sm_means<- round(colMeans(dep_var_sm_data), digits = 3)
+sm_control <- round(colMeans(dep_var_sm_data[which(merged$control_10018 == 1),]), digits = 3)
+
+
+hours <- lm(hours_soc_med_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+            weights = weight, data = merged)
+
+whats <- lm(socmed_whatsapp ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+            weights = weight, data = merged)
+
+fb <- lm(socmed_Facebook ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+         weights = weight, data = merged)
+
+instagram <- lm(socmed_Instagram ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                weights = weight, data = merged)
+
+youtube <- lm(socmed_YouTube ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+              weights = weight, data = merged)
+
+twitter <- lm(socmed_Twitter ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+              weights = weight, data = merged)
+
+snapchat <- lm(socmed_Snapchat ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+               weights = weight, data = merged)
+
+telegram <- lm(socmed_Telegram ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+               weights = weight, data = merged)
+
+socmed_dv <- lm(merged$'X2mos_socmed_dv_num' ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                weights = weight, data = merged)
+
+whatsapp_dv <- lm(merged$'X2mos_whatsapp_dv_num' ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                  weights = weight, data = merged)
+
+
+Table4 <- stargazer(hours, whats, fb, instagram, youtube, twitter, snapchat, telegram, socmed_dv, whatsapp_dv,
+                     header=FALSE,          
+                     font.size="footnotesize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "H",
+                     column.labels=dep_var_Socmed,
+                     covariate.labels= cov_var,
+                     omit = c("Constant","block_ids"), 
+                     omit.stat=c("f", "ser","adj.rsq"), 
+                     add.lines = list(c("Control Mean", sm_control)),
+                     column.sep.width = "0pt",
+                     title = "Balance on social media habits and videos received variables",
+                     type = "latex")
+
+
+note.latex <- "\\multicolumn{11}{l} {\\parbox[t]{19cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment assignment, 
+including randomization block fixed effects. * denotes p<0.1, ** denotes p<0.05, and *** denotes p<0.01.}}  \\\\"
+Table4[grepl("Note", Table4)] <- note.latex
+
+
+# Attitudes Balance Table ----------------------------------------------------
+# B41 - Husb Final Say
+# B42 - Prioritize Educ
+# B43 - Husb Income
+# B44 - Yelling Just
+# B45 - Hitting Just
+# B46 - Future Equal Say
+# B47 - Future Equal Rights
+
+dep_var_At <- c("\\shortstack{Husband \\\\final say}", 
+                "\\shortstack{Husband \\\\earn income}", 
+                "\\shortstack{Yelling \\\\justified}", 
+                "\\shortstack{Hitting \\\\justified}", 
+                "\\shortstack{Male education\\\\priority}", 
+                "\\shortstack{Future \\\\equal say}", 
+                "\\shortstack{Future \\\\equal rights}")
+
+attitude_data <- merged[c("husb_final_say_num", "husb_provide_inc_num",
+                          "husb_justified_yell_num", "husb_justified_beat_num", "prioritize_educ_num", 
+                          "future_equal_say_num", "future_equal_rights_num")]
+
+attitude_means <- round(colMeans(attitude_data), digits = 3)
+at_control <- round(colMeans(attitude_data[which(merged$control_10018 == 1),]), digits = 3)
+
+
+husb_final_say <- lm(husb_final_say_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                     weights = weight, data = merged)
+
+husb_provide_inc <- lm(husb_provide_inc_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                       weights = weight, data = merged)
+
+husb_justified_yell <- lm(husb_justified_yell_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                          weights = weight, data = merged)
+
+husb_justified_beat<- lm(husb_justified_beat_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                         weights = weight, data = merged)
+
+prioritize_educ <- lm(prioritize_educ_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                      weights = weight, data = merged)
+
+future_equal_say <- lm(future_equal_say_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                       weights = weight, data = merged)
+
+future_equal_rights <- lm(future_equal_rights_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                          weights = weight, data = merged)
+
+
+Table5 <- stargazer(husb_final_say, husb_provide_inc, husb_justified_yell, 
+                     husb_justified_beat, prioritize_educ, future_equal_say, future_equal_rights,
+                     header=FALSE,          
+                     font.size="footnotesize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "H",
+                     column.labels=dep_var_At,
+                     covariate.labels= cov_var,
+                     omit = c("Constant","block_ids"), 
+                     omit.stat=c("f", "ser","adj.rsq"), 
+                     add.lines = list(c("Control Mean",at_control)),
+                     column.sep.width = "2pt",
+                     title = "Balance on attitudes toward gender and marital equality",
+                     type = "latex")
+
+
+note.latex <- "\\multicolumn{8}{l} {\\parbox[t]{16cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment assignment, 
+including randomization block fixed effects. * denotes p<0.1, ** denotes p<0.05, and *** denotes p<0.01.}} \\\\"
+Table5[grepl("Note", Table5)] <- note.latex
+
+
+# Reporting Balance Table ----------------------------------------------------
+
+# B61 - Bc Yelling Justified (bc19_yell)
+# B62 - Dc Yelling Justified (dc19_yell)
+# B63 - Bc Hitting Justified (bc19_hit)
+# B64 - Dc Hitting Justified (dc19_hit)
+
+rep_data <- merged[c("bc19_yell_num","bc19_hit_num",
+                     "dc19_yell_num", "dc19_hit_num")]
+
+rep_means <- round(colMeans(rep_data), digits = 3)
+
+rep_control <- round(colMeans(rep_data[which(merged$control_10018 == 1),]), digits = 3)
+
+
+bc_yell <- lm(bc19_yell_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+              weights = weight, data = merged)
+
+
+bc_hit <- lm(bc19_hit_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+             weights = weight, data = merged)
+
+dc_yell <- lm(dc19_yell_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+              weights = weight, data = merged)
+
+dc_hit <- lm(dc19_hit_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+             weights = weight, data = merged)
+
+
+dep_var_re <- c("\\shortstack{Heard of or \\\\ experienced yelling}", 
+                "\\shortstack{Heard of or \\\\ experienced hitting}", 
+                "\\shortstack{Heard of or \\\\ experienced yelling}", 
+                "\\shortstack{Heard of or \\\\ experienced hitting}")
+
+
+Table6 <- stargazer(bc_yell, bc_hit, dc_yell, dc_hit,
+                     header=FALSE,          
+                     font.size="footnotesize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "H",
+                     column.labels=dep_var_re,
+                     covariate.labels= cov_var,
+                     omit = c("Constant","block_ids"), 
+                     omit.stat=c("f", "ser","adj.rsq"), 
+                     add.lines = list(c("Control Mean",rep_control)),
+                     column.sep.width = "2pt",
+                     title = "Balance on domestic violence experienced before and during COVID-19",
+                     type = "latex")
+
+
+note.latex <- "\\multicolumn{5}{l} {\\parbox[t]{15cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment assignment, 
+including randomization block fixed effects. * denotes p<0.1, ** denotes p<0.05, and *** denotes p<0.01.}} \\\\"
+Table6[grepl("Note", Table6)] <- note.latex
+
+
+
+# Scenarios Balance Table around domestic violence ----------------------------------------------------
+
+# B67 - Talk Husb.
+# B68 - Talk Fam.
+# B69 - Report Authorities
+# B70 - Look Online Res.
+# B71 - Contact Org.
+
+scenarios_data <- merged[c("talk_husband_num","talk_family_num","report_authorities_num",
+                           "look_online_num","contact_org_num")]
+
+scenarios_means <- round(colMeans(scenarios_data), digits = 3)
+sce_control <- round(colMeans(scenarios_data[which(merged$control_10018 == 1),]), digits = 3)
+
+
+talk_husband <- lm(talk_husband_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                   weights = weight, data = merged)
+
+talk_family <- lm(talk_family_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                  weights = weight, data = merged)
+
+report_authorities <- lm(report_authorities_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                         weights = weight, data = merged)
+
+look_online <- lm(look_online_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                  weights = weight, data = merged)
+
+contact_org <- lm(contact_org_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                  weights = weight, data = merged)
+
+
+dep_var_sc <- c("\\shortstack{Would talk \\ husband}", 
+                "\\shortstack{Would Talk \\ family}", 
+                "\\shortstack{Would report \\\\ authorities}", 
+                "\\shortstack{Would use \\\\ online resources}", 
+                "\\shortstack{Would contact \\\\ organization}")
+
+
+Table7 <- stargazer(talk_husband, talk_family, report_authorities, look_online, 
+                     contact_org, 
+                     header=FALSE,          
+                     font.size="footnotesize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "H",
+                     column.labels=dep_var_sc,
+                     covariate.labels= cov_var,
+                     omit = c("Constant","block_ids"), 
+                     omit.stat=c("f", "ser","adj.rsq"), 
+                     add.lines = list(c("Control Mean", sce_control)),
+                     column.sep.width = "2pt",
+                     title = "Balance on hypothetical talking to husband and family members, reporting to authorities, use of online resources, 
+                          and contact with an organization when responding to domestic violence",
+                     type = "latex")
+
+
+note.latex <- "\\multicolumn{6}{l} {\\parbox[t]{17cm}{ \\textit{Notes:}  
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment assignment, 
+including randomization block fixed effects. * denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table7[grepl("Note", Table7)] <- note.latex
+
+
+# Knowledge of and Experience of Accessing Resources -----------------------
+
+
+# B78 - Know Online (know_online_valid_num)
+# B79 - Bc Look Online
+# B80 - Dc Look Online
+# B81 - Know Organization (know_org_valid_num)
+# B82 - Bc Look Organization
+# B83 - Dc Look Organization
+
+# unique(merged[c("know_online", "know_online_num")])
+# unique(merged[c("bc19_look_online", "bc19_look_online_num")])
+# unique(merged[c("dc19_look_online", "dc19_look_online_num")])
+# unique(merged[c("know_org", "know_org_num")])
+# unique(merged[c("bc19_look_org", "bc19_look_org_num")])
+# unique(merged[c("dc19_look_org", "dc19_look_org_num")])
+
+
+
+know_data <- merged[c( "know_online_valid_noaut_num", "know_online_nehad_num",
+                       "bc19_look_online_num", "dc19_look_online_num", 
+                       "know_org_noaut_valid_num", "know_org_nehad_num",
+                       "bc19_look_org_num", "dc19_look_org_num")]
+
+
+know_control <- round(colMeans(know_data[which(merged$control_10018 == 1),]), digits = 3)
+
+known_online <- lm(know_online_valid_noaut_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                   weights = weight, data = merged)
+
+known_online_nehad <- lm(know_online_nehad_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                         weights = weight, data = merged)
+
+bc_look_online <- lm(bc19_look_online_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                     weights = weight, data = merged)
+
+dc_look_online <- lm(dc19_look_online_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                     weights = weight, data = merged)
+
+know_org <- lm(know_org_noaut_valid_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+               weights = weight, data = merged)
+
+know_org_nehad <- lm(know_org_nehad_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                     weights = weight, data = merged)
+
+bc_look_org<- lm(bc19_look_org_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                 weights = weight, data = merged)
+
+dc_look_org <- lm(dc19_look_org_num ~ pooledF_WIG + reminder_10018 + factor(block_ids),
+                  weights = weight, data = merged)
+
+
+
+dep_var_know <- c("\\shortstack{Know online:\\\\ other than \\\\ECWR}",
+                  "\\shortstack{Know online: \\\\ECWR}",
+                  "\\shortstack{Before \\\\COVID-19 \\\\used online \\\\resources}", 
+                  "\\shortstack{During \\\\COVID-19 \\\\used online \\\\resources}", 
+                  "\\shortstack{Know \\\\organization:\\\\other than \\\\ECWR}",
+                  "\\shortstack{Know \\\\organization:\\\\ECWR}",
+                  "\\shortstack{Before \\\\COVID-19 \\\\contacted \\\\organization}",
+                  "\\shortstack{During \\\\COVID-19 \\\\contacted \\\\organization}")
+
+
+Table8 <- stargazer(known_online, known_online_nehad,bc_look_online, dc_look_online, 
+                     know_org, know_org_nehad, bc_look_org, dc_look_org,
+                     header=FALSE,        
+                     font.size="footnotesize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "H",
+                     column.labels=dep_var_know,
+                     covariate.labels= cov_var,
+                     omit = c("Constant","block_ids"), 
+                     omit.stat=c("f", "ser","adj.rsq"), 
+                     add.lines = list(c("Control Mean", know_control)),
+                     column.sep.width = "0pt",
+                     title = "Balance on knowledge and experience of accessing resources for women",
+                     type = "latex")
+
+
+note.latex <- "\\multicolumn{9}{l} {\\parbox[t]{20cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment assignment, 
+including randomization block fixed effects. * denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table8[grepl("Note", Table8)] <- note.latex
+
+```
+
+```{r include=FALSE, results="asis"}
+Panel_Balance <- function(panelA, panelB, x, align = NULL) {
+  
+  TableA <- paste(panelA, collapse = "")
+  TableB <- paste(panelB, collapse = "")
+  
+
+  aux1 <- sub("\\\\\\[-1.8ex].*", "\\hline \\\\\\\\[-1.8ex] \\\\\\\\[-0.5ex] \\\\multicolumn{%}{l}{\\\\textbf{Panel A: Respondent’s outcomes}} \\\\\\\\ \\\\hline \\\\\\\\[-1ex] ", TableA)
+  
+  # auxiliar text that uses the value of x
+  text <- c(".*\\\\\\cline\\{2-%\\}")
+  text <- gsub("%", x, text)
+  
+  aux2 <- sub(text, '', TableA)
+
+  modified_tableA <- paste(aux1, aux2, collapse = "")
+  
+  
+  modified_tableA <- sub("\\\\hline \\\\hline.*", " \\\\hline \\\\\\\\[-0.5ex] \\\\multicolumn{%}{l}{\\\\textbf{Panel B: Whether married and husband’ outcomes}} \\\\\\\\ \\\\hline \\\\\\\\[-1ex]", modified_tableA)
+  modified_tableA <- gsub("%", x, modified_tableA)
+  
+  modified_tableB <- sub(".*Married", " & Married", TableB)
+  
+  merged_table <- paste(modified_tableA, modified_tableB, collapse = "")
+  
+  if (!is.null(align)) {
+    
+    merged_table <- gsub("begin\\{tabular", "hspace*{-%cm} \\\\begin\\{tabular", merged_table)
+    merged_table <- gsub("%", align, merged_table)
+  }
+  
+
+  return(merged_table)
+}
+
+```
+
+
+```{r include=FALSE, results="asis"}
+alignTable <- function(aligned, align = NULL) {
+
+    aligned <- paste(aligned, collapse = "")
+
+    aligned <- gsub("begin\\{tabular", "hspace*{-%cm} \\\\begin\\{tabular", aligned)
+    aligned <- gsub("%", align, aligned)
+    
+    return(aligned)
+}
+```
+
+
+
+```{r include=FALSE}
+dir.create(file.path("Tables/Appendix B"), showWarnings = FALSE)
+
+```
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel_Balance(Table1A,Table1B, 6),"\n", file = 'Tables/Appendix B/Table1.tex')
+cat( Panel_Balance(Table1A,Table1B, 6) )
+```
+
+```{r echo=FALSE, results="asis"}
+
+cat(alignTable(Table2, 0.5), "\n", file = 'Tables/Appendix B/Table2.tex')
+cat(alignTable(Table2, 0.5))
+```
+
+```{r echo=FALSE, results="asis"}
+
+cat(alignTable(Table3, 0.5), "\n", file = 'Tables/Appendix B/Table3.tex')
+cat(alignTable(Table3, 0.5))
+```
+
+```{r echo=FALSE, results="asis"}
+
+cat(alignTable(Table4, 2), "\n", file = 'Tables/Appendix B/Table4.tex')
+cat(alignTable(Table4, 2))
+```
+
+```{r echo=FALSE, results="asis"}
+
+cat( Table5,"\n", file = 'Tables/Appendix B/Table5.tex')
+cat( Table5 )
+```
+
+```{r echo=FALSE, results="asis"}
+cat( Table6,"\n", file = 'Tables/Appendix B/Table6.tex')
+cat( Table6 )
+```
+
+```{r echo=FALSE, results="asis"}
+cat( Table7,"\n", file = 'Tables/Appendix B/Table7.tex')
+cat( Table7 )
+```
+
+```{r echo=FALSE, results="asis"}
+cat(alignTable(Table8, 1.5), "\n", file = 'Tables/Appendix B/Table8.tex')
+cat(alignTable(Table8, 1.5))
+```
+
+
+```{r include=FALSE}
+
+covariates <- c("Facebook, \\\\ WhatsApp Ind., and\\\\ WhatsApp Group", "TV Show Reminder")
+
+# First stage for TV show -----------------------------------------
+
+
+# E17: tv_evening_num_end
+# E19: three_viewed_channel_end_num 
+# E20: three_viewed_shows_end_num 
+# E21: tv_sat_2mos_end_num 
+# E22: watch_hekayat_end_num
+# E23: heard_hekayat_end_num
+# E24: how_heard_hekayat_num
+# E25: whatsapp_remind_2mos_end_num
+# E26_1: Whether Watched Episodes (wheter_episodes_hekayat_end_num)
+# E26: episodes_hekayat_end_num
+# E27: episodes_content_end_num - episodes_content_end_num_vague
+# E28: episode_content_like_end_num - episode_content_like_end_num_vague
+
+
+FS_TV_data <- merged[c("tv_evening_num_end", "three_viewed_channel_end_num",
+                       "three_viewed_shows_end_num", "tv_sat_2mos_end_num", "watch_hekayat_end_num",
+                       "heard_hekayat_end_num", "how_heard_hekayat_num",
+                       "whatsapp_remind_2mos_end_num", "wheter_episodes_hekayat_end_num" , "episodes_hekayat_end_num",
+                       "episodes_content_end_num_vague", "episode_content_like_end_num_vague")]
+
+
+TV_control_mean <- round(colMeans(FS_TV_data[which(merged$control_10018 == 1),]), digits = 3)
+
+# Calculate the z-score
+zscore <- scale(rowMeans(scale(FS_TV_data) %*% diag(c(1,1,1,1,1,1,1,1,1,1,1,1))))
+
+# Save Zscore for Heterogeneous Effects
+merged$FS_TV_zscore <- zscore
+
+
+# Missing 3: saturday and the last two
+TV_dep_var <- c("\\shortstack{Index of \\\\ (1,1,1,1,1,1,\\\\1,1,1,1,1,1)}",
+                "\\shortstack{Watched TV \\\\ evening}",
+                "\\shortstack{Watched \\\\channels of \\\\TV show}",
+                "\\shortstack{Watched \\\\TV show \\\\type}",
+                "\\shortstack{Mentioned \\\\watched TV \\\\show Saturday \\\\evening}",
+                "\\shortstack{Watched \\\\TV show}",
+                "\\shortstack{Heard of \\\\TV show}",
+                "\\shortstack{Heard of \\\\TV show via \\\\WhatsApp}",
+                "\\shortstack{Received \\\\TV show \\\\WhatsApp \\\\reminder}",
+                "\\shortstack{Whether \\\\watched \\\\TV show \\\\episodes}", 
+                "\\shortstack{Number of \\\\TV show \\\\episodes \\\\watched}",
+                "\\shortstack{Accurate \\\\content of \\\\the TV show}",
+                "\\shortstack{Accurate \\\\TV show topic \\\\liked}")
+
+# All family controls -----
+
+# Missing 3: saturday and the last two
+tv_0_2 <-lm(zscore ~ pooledF_WIG  + reminder_10018 +
+              tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_1_2 <-lm(tv_evening_num_end ~ pooledF_WIG  + reminder_10018 +
+              tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+
+tv_2_2 <-lm(three_viewed_channel_end_num ~ pooledF_WIG + reminder_10018 +
+              tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_3_2 <-lm(three_viewed_shows_end_num ~ pooledF_WIG+ reminder_10018 +
+              tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_4_2 <-lm(tv_sat_2mos_end_num ~ pooledF_WIG+ reminder_10018 +
+              tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_5_2 <-lm(watch_hekayat_end_num ~ pooledF_WIG+ reminder_10018 +
+              tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_6_2 <-lm(heard_hekayat_end_num ~ pooledF_WIG +reminder_10018 +
+              tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_7_2 <-lm(how_heard_hekayat_num ~ pooledF_WIG +reminder_10018 +
+              tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_8_2 <-lm(whatsapp_remind_2mos_end_num ~ pooledF_WIG +reminder_10018 +
+              tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_9_2 <-lm(wheter_episodes_hekayat_end_num ~ pooledF_WIG + reminder_10018 +
+              tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+
+tv_10_2 <-lm(episodes_hekayat_end_num ~ pooledF_WIG + reminder_10018 +
+               tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+               factor(block_ids),
+             weights = weight,
+             data = merged)
+
+
+tv_11_2 <-lm(episodes_content_end_num_vague ~ pooledF_WIG  + reminder_10018 +
+               tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+               factor(block_ids),
+             weights = weight,
+             data = merged)
+
+
+tv_12_2 <-lm(episode_content_like_end_num_vague ~ pooledF_WIG  + reminder_10018 +
+               tv_evening_num + tv_sattelite_num + tv_top3_chan_num + tv_top3_shows_num + sat_show_num +
+               factor(block_ids),
+             weights = weight,
+             data = merged)
+
+
+l0 <- linearHypothesis(tv_0_2, "pooledF_WIG = reminder_10018", digits = 3)
+l1 <- linearHypothesis(tv_1_2, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(tv_2_2, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(tv_3_2, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(tv_4_2, "pooledF_WIG = reminder_10018", digits = 3)
+l5 <- linearHypothesis(tv_5_2, "pooledF_WIG = reminder_10018", digits = 3)
+l6 <- linearHypothesis(tv_6_2, "pooledF_WIG = reminder_10018", digits = 3)
+l7 <- linearHypothesis(tv_7_2, "pooledF_WIG = reminder_10018", digits = 3)
+l8 <- linearHypothesis(tv_8_2, "pooledF_WIG = reminder_10018", digits = 3)
+l9 <- linearHypothesis(tv_9_2, "pooledF_WIG = reminder_10018", digits = 3)
+l10 <- linearHypothesis(tv_10_2, "pooledF_WIG = reminder_10018", digits = 3)
+l11 <- linearHypothesis(tv_11_2, "pooledF_WIG = reminder_10018", digits = 3)
+l12 <- linearHypothesis(tv_12_2, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+
+pvals1 <- c(round(l0$`Pr(>F)`[2], digits = 4), round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4),
+            round(l3$`Pr(>F)`[2], digits = 4), round(l4$`Pr(>F)`[2], digits = 4), round(l5$`Pr(>F)`[2], digits = 4),
+            round(l6$`Pr(>F)`[2], digits = 4), round(l7$`Pr(>F)`[2], digits = 4), round(l8$`Pr(>F)`[2], digits = 4),
+            round(l9$`Pr(>F)`[2], digits = 4), round(l10$`Pr(>F)`[2], digits = 4), round(l11$`Pr(>F)`[2], digits = 4),
+            round(l12$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "tv_top3_chan_num", "tv_evening_num", "tv_top3_shows_num",
+              "tv_sattelite_num", "sat_show_num")
+
+Table9A <- stargazer(tv_0_2, tv_1_2, tv_2_2, tv_3_2, tv_4_2, tv_5_2,
+                     tv_6_2, tv_7_2, tv_8_2, tv_9_2, tv_10_2, tv_11_2, tv_12_2,
+                     float.env = "sidewaystable",
+                     header=FALSE,
+                     font.size="scriptsize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "t",
+                     column.labels=TV_dep_var,
+                     covariate.labels= covariates,
+                     omit = omit_var,
+                     omit.stat=c("f", "ser","adj.rsq"),
+                     add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                     column.sep.width = "0pt",
+                     title = "Treatment effect on TV show consumption",
+                     type = "latex")
+
+# Lagged DV
+
+tv_0_2 <-lm(zscore ~ pooledF_WIG  + reminder_10018 +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_1_2 <-lm(tv_evening_num_end ~ pooledF_WIG  + reminder_10018 +
+              tv_evening_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+
+tv_2_2 <-lm(three_viewed_channel_end_num ~ pooledF_WIG + reminder_10018 +
+              tv_top3_chan_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_3_2 <-lm(three_viewed_shows_end_num ~ pooledF_WIG+ reminder_10018 +
+              tv_top3_shows_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_4_2 <-lm(tv_sat_2mos_end_num ~ pooledF_WIG+ reminder_10018 +
+              sat_show_num + 
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_5_2 <-lm(watch_hekayat_end_num ~ pooledF_WIG+ reminder_10018 +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_6_2 <-lm(heard_hekayat_end_num ~ pooledF_WIG +reminder_10018 +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_7_2 <-lm(how_heard_hekayat_num ~ pooledF_WIG +reminder_10018 +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_8_2 <-lm(whatsapp_remind_2mos_end_num ~ pooledF_WIG +reminder_10018 +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+tv_9_2 <-lm(wheter_episodes_hekayat_end_num ~ pooledF_WIG + reminder_10018 +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+
+tv_10_2 <-lm(episodes_hekayat_end_num ~ pooledF_WIG + reminder_10018 +
+               factor(block_ids),
+             weights = weight,
+             data = merged)
+
+
+tv_11_2 <-lm(episodes_content_end_num_vague ~ pooledF_WIG  + reminder_10018 +
+               factor(block_ids),
+             weights = weight,
+             data = merged)
+
+
+tv_12_2 <-lm(episode_content_like_end_num_vague ~ pooledF_WIG  + reminder_10018 +
+               factor(block_ids),
+             weights = weight,
+             data = merged)
+
+l0 <- linearHypothesis(tv_0_2, "pooledF_WIG = reminder_10018", digits = 3)
+l1 <- linearHypothesis(tv_1_2, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(tv_2_2, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(tv_3_2, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(tv_4_2, "pooledF_WIG = reminder_10018", digits = 3)
+l5 <- linearHypothesis(tv_5_2, "pooledF_WIG = reminder_10018", digits = 3)
+l6 <- linearHypothesis(tv_6_2, "pooledF_WIG = reminder_10018", digits = 3)
+l7 <- linearHypothesis(tv_7_2, "pooledF_WIG = reminder_10018", digits = 3)
+l8 <- linearHypothesis(tv_8_2, "pooledF_WIG = reminder_10018", digits = 3)
+l9 <- linearHypothesis(tv_9_2, "pooledF_WIG = reminder_10018", digits = 3)
+l10 <- linearHypothesis(tv_10_2, "pooledF_WIG = reminder_10018", digits = 3)
+l11 <- linearHypothesis(tv_11_2, "pooledF_WIG = reminder_10018", digits = 3)
+l12 <- linearHypothesis(tv_12_2, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l0$`Pr(>F)`[2], digits = 4), round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4),
+            round(l3$`Pr(>F)`[2], digits = 4), round(l4$`Pr(>F)`[2], digits = 4), round(l5$`Pr(>F)`[2], digits = 4),
+            round(l6$`Pr(>F)`[2], digits = 4), round(l7$`Pr(>F)`[2], digits = 4), round(l8$`Pr(>F)`[2], digits = 4),
+            round(l9$`Pr(>F)`[2], digits = 4), round(l10$`Pr(>F)`[2], digits = 4), round(l11$`Pr(>F)`[2], digits = 4),
+            round(l12$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "tv_top3_chan_num", "tv_evening_num", "tv_top3_shows_num", "sat_show_num")
+
+Table9B <- stargazer(tv_0_2, tv_1_2, tv_2_2, tv_3_2, tv_4_2, tv_5_2,
+                        tv_6_2, tv_7_2, tv_8_2, tv_9_2, tv_10_2, tv_11_2, tv_12_2,
+                        float.env = "sidewaystable",
+                        header=FALSE,
+                        font.size="scriptsize",
+                        dep.var.labels.include = FALSE,
+                        table.placement = "t",
+                        column.labels=TV_dep_var,
+                        covariate.labels= covariates,
+                        omit = omit_var,
+                        omit.stat=c("f", "ser","adj.rsq"),
+                        add.lines = list(c("Control Mean", 0, TV_control_mean), c("F, WI, WG = TV (p-value)", pvals1)),
+                        column.sep.width = "0pt",
+                        title = "Treatment effect on TV show consumption",
+                        type = "latex")
+
+
+note.latex <- "\\multicolumn{14}{l} {\\parbox[t]{26cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Watches TV evening, Owns TV satellite, Watches Channels of TV show, 
+Watches TV show type, and Mentioned watched TV show Saturday evening. 
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table9B[grepl("Note", Table9B)] <- note.latex
+
+
+
+# --------------------------------------------------------------------------------------------
+# ---------------- First stage for Facebook and  WhatsApp Treatment ---------------------------
+# ---------------------------------------------------------------------------------------------
+
+
+
+# First stage for Facebook and  WhatsApp Treatment  ---------------------------------------------
+# Controls Names:
+# B33 - Soc Media Videos Received
+# B34 - WhatsApp Videos Received
+
+
+# Variables names
+# E33 - Videos of Empowerment and Support socmed
+# E34 - Videos of Empowerment and Support WhatsApp
+# E35 - Received Videos WA or FB
+# E36 - Watched videos WA or FB
+# E37 - Number of videos watched
+# E38 - Content Watched - videos_watched_content_end_num_vague
+# E39 - Most Liked Topics - video_content_like_end_num_vague
+
+
+
+
+FS_fw_data <- merged[c("videos_socmed_2mos_end_num", "videos_whatsapp_2mos_end_num",
+                       "videos_whatsapp_receive_end_num", "videos_watched_end_num",
+                       "videos_watched_no_end_num", "videos_watched_content_end_num_vague", 
+                       "video_content_like_end_num_vague")]
+
+FS_fw_control_mean <- round(colMeans(FS_fw_data[which(merged$control_10018 == 1),]), digits = 3)
+
+
+# Calculate the z-score
+zscore <- scale(rowMeans(scale(FS_fw_data) %*% diag(c(1,1,1,1,1,1,1))))
+
+merged$FS_FW_zscore <- zscore
+
+
+
+# All Facebook and WhatsApp individual treatment indicators pooled, but the rest separate
+dep_var <- c("\\shortstack{Z-Score \\\\ (1,1,1,1,1,1,1)}",
+             "\\shortstack{Watched \\\\videos on \\\\social media}",
+             "\\shortstack{Watched \\\\videos on\\\\ WhatsApp}",
+             "\\shortstack{Received \\\\videos on \\\\WhatsApp or \\\\Facebook}",
+             "\\shortstack{Watched \\\\videos on \\\\WhatsApp or \\\\Facebook}",
+             "\\shortstack{Number of \\\\videos watched}",
+             "\\shortstack{Accurate \\\\content of \\\\the videos}",
+             "\\shortstack{Accurate \\\\video topic \\\\liked}")
+
+
+
+# All family controls
+
+lm_0_2 <-lm(zscore ~ pooledF_WIG  + reminder_10018 +
+              X2mos_socmed_dv_num + X2mos_whatsapp_dv_num + factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_1_2 <-lm(videos_socmed_2mos_end_num ~ pooledF_WIG  + reminder_10018 +
+              X2mos_socmed_dv_num + X2mos_whatsapp_dv_num + factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_2_2 <-lm(videos_whatsapp_2mos_end_num ~ pooledF_WIG  + reminder_10018 +
+              X2mos_socmed_dv_num + X2mos_whatsapp_dv_num + factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_3_2 <-lm(videos_whatsapp_receive_end_num ~ pooledF_WIG  + reminder_10018 +
+              X2mos_socmed_dv_num + X2mos_whatsapp_dv_num + factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_4_2 <-lm(videos_watched_end_num ~ pooledF_WIG  + reminder_10018 +
+              X2mos_socmed_dv_num + X2mos_whatsapp_dv_num + factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_5_2 <-lm(videos_watched_no_end_num ~ pooledF_WIG  + reminder_10018 +
+              X2mos_socmed_dv_num + X2mos_whatsapp_dv_num + factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_6_2 <-lm(videos_watched_content_end_num_vague ~ pooledF_WIG  + reminder_10018 +
+              X2mos_socmed_dv_num + X2mos_whatsapp_dv_num + factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_7_2 <-lm(video_content_like_end_num_vague ~ pooledF_WIG  + reminder_10018 +
+              X2mos_socmed_dv_num + X2mos_whatsapp_dv_num + factor(block_ids),
+            weights = weight,
+            data = merged)
+
+l0 <- linearHypothesis(lm_0_2, "pooledF_WIG = reminder_10018", digits = 3)
+l1 <- linearHypothesis(lm_1_2, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(lm_2_2, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(lm_3_2, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(lm_4_2, "pooledF_WIG = reminder_10018", digits = 3)
+l5 <- linearHypothesis(lm_5_2, "pooledF_WIG = reminder_10018", digits = 3)
+l6 <- linearHypothesis(lm_6_2, "pooledF_WIG = reminder_10018", digits = 3)
+l7 <- linearHypothesis(lm_7_2, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l0$`Pr(>F)`[2], digits = 4), round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4),
+            round(l4$`Pr(>F)`[2], digits = 4), round(l5$`Pr(>F)`[2], digits = 4), round(l6$`Pr(>F)`[2], digits = 4), round(l7$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "X2mos_socmed_dv_num" ,"X2mos_whatsapp_dv_num")
+
+Table10A <- stargazer(lm_0_2, lm_1_2, lm_2_2, lm_3_2, lm_4_2, lm_5_2, lm_6_2, lm_7_2,
+                        header=FALSE,
+                        font.size="scriptsize",
+                        dep.var.labels.include = FALSE,
+                        table.placement = "H",
+                        column.labels=dep_var,
+                        covariate.labels= covariates,
+                        omit = omit_var,
+                        omit.stat=c("f", "ser","adj.rsq"),
+                        add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                        column.sep.width = "2pt",
+                        title = "Treatment effect on videos of women's empowerment and support consumption",
+                        type = "latex")
+
+
+# Lagged DV
+
+lm_0_2 <-lm(zscore ~ pooledF_WIG  + reminder_10018 +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_1_2 <-lm(videos_socmed_2mos_end_num ~ pooledF_WIG  + reminder_10018 +
+              X2mos_socmed_dv_num +  factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_2_2 <-lm(videos_whatsapp_2mos_end_num ~ pooledF_WIG  + reminder_10018 +
+              X2mos_whatsapp_dv_num + factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_3_2 <-lm(videos_whatsapp_receive_end_num ~ pooledF_WIG  + reminder_10018 +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_4_2 <-lm(videos_watched_end_num ~ pooledF_WIG  + reminder_10018 +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_5_2 <-lm(videos_watched_no_end_num ~ pooledF_WIG  + reminder_10018 +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_6_2 <-lm(videos_watched_content_end_num_vague ~ pooledF_WIG  + reminder_10018 +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+lm_7_2 <-lm(video_content_like_end_num_vague ~ pooledF_WIG  + reminder_10018 +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+l0 <- linearHypothesis(lm_0_2, "pooledF_WIG = reminder_10018", digits = 3)
+l1 <- linearHypothesis(lm_1_2, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(lm_2_2, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(lm_3_2, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(lm_4_2, "pooledF_WIG = reminder_10018", digits = 3)
+l5 <- linearHypothesis(lm_5_2, "pooledF_WIG = reminder_10018", digits = 3)
+l6 <- linearHypothesis(lm_6_2, "pooledF_WIG = reminder_10018", digits = 3)
+l7 <- linearHypothesis(lm_7_2, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l0$`Pr(>F)`[2], digits = 4), round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4),
+            round(l4$`Pr(>F)`[2], digits = 4), round(l5$`Pr(>F)`[2], digits = 4), round(l6$`Pr(>F)`[2], digits = 4), round(l7$`Pr(>F)`[2], digits = 4))
+
+omit_var <- c("Constant","block_ids", "X2mos_socmed_dv_num" ,"X2mos_whatsapp_dv_num")
+
+Table10B <- stargazer(lm_0_2, lm_1_2, lm_2_2, lm_3_2, lm_4_2, lm_5_2, lm_6_2, lm_7_2,
+                        header=FALSE,
+                        font.size="scriptsize",
+                        dep.var.labels.include = FALSE,
+                        table.placement = "H",
+                        column.labels=dep_var,
+                        covariate.labels= covariates,
+                        omit = omit_var,
+                        omit.stat=c( "n", "f", "ser","adj.rsq"),
+                        add.lines = list(c("Control Mean", 0, FS_fw_control_mean), c("F, WI, WG = TV (p-value)", pvals1)),
+                        # add.lines = list(c("F, WI = TV (Pval)", pvals2)),
+                        column.sep.width = "2pt",
+                        title = "Treatment effect on videos of women's empowerment and support consumption",
+                        type = "latex")
+
+
+note.latex <- "\\multicolumn{9}{l} {\\parbox[t]{19cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Social media videos received and WhatsApp videos received.
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table10B[grepl("Note", Table10B)] <- note.latex
+
+
+```
+
+
+
+```{r include=FALSE, results="asis"}
+Panel <- function(panelA, panelB, x, align = NULL) {
+  
+  TableA <- paste(panelA, collapse = "")
+  TableB <- paste(panelB, collapse = "")
+  
+
+  aux1 <- sub("\\\\\\[-1.8ex].*", "\\hline \\\\\\\\[-1.8ex] \\\\\\\\[-0.5ex] \\\\multicolumn{%}{l}{\\\\textbf{Panel A: Controlling by all baseline covariates in the outcome family}} \\\\\\\\ \\\\hline \\\\\\\\[-1ex] ", TableA)
+  
+  # auxiliar text that uses the value of x
+  text <- c(".*\\\\\\cline\\{2-%\\}")
+  text <- gsub("%", x, text)
+  
+  aux2 <- sub(text, '', TableA)
+
+  modified_tableA <- paste(aux1, aux2, collapse = "")
+  
+  
+  modified_tableA <- sub("\\\\hline \\\\hline.*", " \\\\hline \\\\\\\\[-0.5ex] \\\\multicolumn{%}{l}{\\\\textbf{Panel B: Controlling by the dependent variable at baseline (if available)}} \\\\\\\\ \\\\hline \\\\\\\\[-1ex]", modified_tableA)
+  modified_tableA <- gsub("%", x, modified_tableA)
+  
+  modified_tableB <- sub(".*Facebook, ", " Facebook, ", TableB)
+  
+  merged_table <- paste(modified_tableA, modified_tableB, collapse = "")
+  
+  if (!is.null(align)) {
+    
+    merged_table <- gsub("begin\\{tabular", "hspace*{-%cm} \\\\begin\\{tabular", merged_table)
+    merged_table <- gsub("%", align, merged_table)
+  }
+  
+
+  return(merged_table)
+}
+
+```
+
+\clearpage
+
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table9A,Table9B, 14,2),"\n", file = 'Tables/Appendix B/Table9.tex')
+cat( Panel(Table9A,Table9B, 14,2) )
+
+```
+
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table10A,Table10B, 9,1),"\n", file = 'Tables/Appendix B/Table10.tex')
+cat( Panel(Table10A,Table10B, 9,1) )
+
+```
+
+
+
+
+```{r include=FALSE}
+controls <- c("Facebook, \\\\ WhatsApp Ind., and\\\\ WhatsApp Group", "TV Show Reminder")
+
+# Knowledge of online resources and organizations  --------------------------------------------------------------
+
+knowledge2 <- merged[c("online_dvsa_noaut_end_num","online_dvsa_nehad_end_num", "org_dvsa_noaut_end_num", "org_dvsa_nehad_end_num")]
+
+know2_mean <- round(colMeans(knowledge2[which(merged$control_10018 == 1),]), digits = 3)
+
+zscore <- scale(rowMeans(scale(knowledge2) %*% diag(c(1, 1, 1, 1))))
+
+merged$RF_knowledge2_zscore <- zscore
+
+know_during_var <- c("\\shortstack{Index of \\\\ (1,1,1,1)}", 
+                     "\\shortstack{Know online:\\\\ other than ECWR}",
+                     "\\shortstack{Know online:\\\\ ECWR}",
+                     "\\shortstack{Know organization:\\\\ other than ECWR}",
+                     "\\shortstack{Know organization:\\\\ ECWR}")
+
+# All Controls
+know_1 <-lm(zscore ~ pooledF_WIG  + reminder_10018 + 
+              know_online_valid_noaut_num + bc19_look_online_num + dc19_look_online_num + bc19_look_org_num + dc19_look_org_num +
+              know_org_noaut_valid_num + know_online_nehad_num + know_org_nehad_num +
+              factor(block_ids), 
+            weights = weight, 
+            data = merged)
+
+
+know_2 <-lm(online_dvsa_noaut_end_num ~ pooledF_WIG  + reminder_10018 + 
+              know_online_valid_noaut_num + bc19_look_online_num + dc19_look_online_num + bc19_look_org_num + dc19_look_org_num +
+              know_org_noaut_valid_num + know_online_nehad_num + know_org_nehad_num +
+              factor(block_ids), 
+            weights = weight, 
+            data = merged)
+
+
+know_3 <-lm(online_dvsa_nehad_end_num ~ pooledF_WIG  + reminder_10018 + 
+              know_online_valid_noaut_num + bc19_look_online_num + dc19_look_online_num + bc19_look_org_num + dc19_look_org_num +
+              know_org_noaut_valid_num +  know_online_nehad_num + know_org_nehad_num +
+              factor(block_ids), 
+            weights = weight, 
+            data = merged)
+
+know_4 <-lm(org_dvsa_noaut_end_num ~ pooledF_WIG  + reminder_10018 + 
+              know_online_valid_noaut_num + bc19_look_online_num + dc19_look_online_num + bc19_look_org_num + dc19_look_org_num +
+              know_org_noaut_valid_num +  know_online_nehad_num + know_org_nehad_num +
+              factor(block_ids), 
+            weights = weight, 
+            data = merged)
+
+
+know_5 <-lm(org_dvsa_nehad_end_num ~ pooledF_WIG  + reminder_10018 + 
+              know_online_valid_noaut_num + bc19_look_online_num + dc19_look_online_num + bc19_look_org_num + dc19_look_org_num +
+              know_org_noaut_valid_num +  know_online_nehad_num + know_org_nehad_num +
+              factor(block_ids), 
+            weights = weight, 
+            data = merged)
+
+
+
+l0 <- linearHypothesis(know_1, "pooledF_WIG = reminder_10018", digits = 3)
+l1 <- linearHypothesis(know_2, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(know_3, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(know_4, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(know_5, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l0$`Pr(>F)`[2], digits = 4), round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4),
+            round(l3$`Pr(>F)`[2], digits = 4), round(l4$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "know_online_valid_num", "dc19_look_online_num", "bc19_look_online_num", "bc19_look_org_num",
+              "dc19_look_org_num", "dcovid_accessonline_end_num_refuse", "dcovid_contactorg_end_num_refuse", "know_org_valid_num",
+              "know_online_valid_noaut_num", "know_org_noaut_valid_num", "know_online_nehad_num", "know_org_nehad_num")
+
+Table11A <- stargazer(know_1, know_2, know_3, know_4, know_5,
+                          header=FALSE,          
+                          font.size="footnotesize",
+                          dep.var.labels.include = FALSE,
+                          table.placement = "H",
+                          column.labels=know_during_var,
+                          covariate.labels= controls,
+                          omit = omit_var, 
+                          omit.stat=c("n", "f", "ser","adj.rsq"), 
+                          add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                          column.sep.width = "0pt",
+                          title = "Treatment effect on knowledge about treatment information",
+                          type = "latex")
+
+
+# Lagged DV
+know_1 <-lm(zscore ~ pooledF_WIG  + reminder_10018 + 
+              factor(block_ids), 
+            weights = weight, 
+            data = merged)
+
+
+know_2 <-lm(online_dvsa_noaut_end_num ~ pooledF_WIG  + reminder_10018 + 
+              know_online_valid_noaut_num +
+              factor(block_ids), 
+            weights = weight, 
+            data = merged)
+
+
+know_3 <-lm(online_dvsa_nehad_end_num ~ pooledF_WIG  + reminder_10018 + 
+              know_online_nehad_num +
+              factor(block_ids), 
+            weights = weight, 
+            data = merged)
+
+know_4 <-lm(org_dvsa_noaut_end_num ~ pooledF_WIG  + reminder_10018 + 
+              know_org_noaut_valid_num +
+              factor(block_ids), 
+            weights = weight, 
+            data = merged)
+
+
+know_5 <-lm(org_dvsa_nehad_end_num ~ pooledF_WIG  + reminder_10018 + 
+              know_org_nehad_num +
+              factor(block_ids), 
+            weights = weight, 
+            data = merged)
+
+l0 <- linearHypothesis(know_1, "pooledF_WIG = reminder_10018", digits = 3)
+l1 <- linearHypothesis(know_2, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(know_3, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(know_4, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(know_5, "pooledF_WIG = reminder_10018", digits = 3)
+
+pvals1 <- c(round(l0$`Pr(>F)`[2], digits = 4), round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4),
+            round(l3$`Pr(>F)`[2], digits = 4), round(l4$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "know_org_noaut_valid_num", 
+              "know_online_valid_noaut_num", "know_org_nehad_num", "know_online_nehad_num")
+
+Table11B <- stargazer(know_1, know_2, know_3, know_4, know_5,
+                          header=FALSE,          
+                          font.size="footnotesize",
+                          dep.var.labels.include = FALSE,
+                          table.placement = "H",
+                          column.labels=know_during_var,
+                          covariate.labels= controls,
+                          omit = omit_var, 
+                          omit.stat=c("f", "ser","adj.rsq"), 
+                          add.lines = list(c("Control Mean", 0, know2_mean), c("F, WI, WG = TV (p-value)", pvals1)),
+                          column.sep.width = "0pt",
+                          title = "Treatment effect on knowledge about treatment information",
+                          type = "latex")
+
+
+note.latex <- "\\multicolumn{6}{l} {\\parbox[t]{16cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Know online: other than ECWR, Know online: ECWR, Before COVID-19 used online resources, 
+During COVID-19 used online resources, Know organization: other than ECWR, Know organization: ECWR
+Before COVID-19 contacted organization, and During COVID-19 contacted organization.
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table11B[grepl("Note", Table11B)] <- note.latex
+
+
+# Attitudes towards female empowerment, husband role, and women role in the workplace (domestic related)
+
+husb_work_att <- merged[c("husb_final_say_end_num","husb_inc_end_num", "husb_just_yell_end_num",
+                          "woman_work_outside_end_num", "female_circ_marriage_end_num", "circ_tf_end_num",
+                          "marriage_age_tf_end_num", "khul_divorce_tf_end_num")]
+
+husb_work_att_mean <- round(colMeans(husb_work_att[which(merged$control_10018 == 1),]), digits = 3)
+
+# Calculate the z-score
+zscore <- scale(rowMeans(scale(husb_work_att) %*% diag(c(-1,-1,-1,1,-1,-1,-1,1))))
+
+merged$RF_att1_zscore <- zscore
+
+att1_dep_var <- c("\\shortstack{Index of \\\\ (-1,-1,-1,1, \\\\ -1,-1,-1,1)}", 
+                  "Husband final say", 
+                  "Husband earn income", 
+                  "Yelling justified", 
+                  "\\shortstack{Gain  \\\\ independence \\\\ by working\\\\ outside the\\\\  household}",
+                  "\\shortstack{Circumcision \\\\ important \\\\ for women \\\\ marriage}", 
+                  "\\shortstack{Female \\\\circumcision \\\\ health \\\\benefits}",
+                  "\\shortstack{Marriage\\\\ permitted \\\\ under age 18 with \\\\family consent}",
+                  "\\shortstack{Khul: \\\\ Women can \\\\divorce husband \\\\withouth \\\\a reason}")
+
+# All Controls 
+
+domestic_z <- lm(zscore ~ pooledF_WIG +reminder_10018 + 
+                   husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+                   husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+                   factor(block_ids),
+                 weights = weight, data = merged)
+
+
+domestic_1 <- lm(husb_final_say_end_num ~ pooledF_WIG +reminder_10018 + 
+                   husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+                   husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+                   factor(block_ids),
+                 weights = weight, data = merged)
+
+
+domestic_2 <- lm(husb_inc_end_num ~ pooledF_WIG +reminder_10018 + 
+                   husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+                   husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+                   factor(block_ids),
+                 weights = weight, data = merged)
+
+
+domestic_3 <- lm(husb_just_yell_end_num ~ pooledF_WIG +reminder_10018 + 
+                   husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+                   husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+                   factor(block_ids),
+                 weights = weight, data = merged)
+
+domestic_4 <- lm(woman_work_outside_end_num ~ pooledF_WIG +reminder_10018 + 
+                   husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+                   husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+                   factor(block_ids),
+                 weights = weight, data = merged)
+
+domestic_5 <- lm(female_circ_marriage_end_num ~ pooledF_WIG +reminder_10018 + 
+                   husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+                   husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+                   factor(block_ids),
+                 weights = weight, na.action = na.omit, data = merged)
+
+domestic_6 <- lm(circ_tf_end_num ~ pooledF_WIG +reminder_10018 + 
+                   husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+                   husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+                   factor(block_ids),
+                 weights = weight, data = merged)
+
+domestic_7 <- lm(marriage_age_tf_end_num ~ pooledF_WIG +reminder_10018 + 
+                   husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+                   husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+                   factor(block_ids),
+                 weights = weight,  data = merged)
+
+domestic_8 <- lm(khul_divorce_tf_end_num ~ pooledF_WIG +reminder_10018 + 
+                   husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+                   husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+                   factor(block_ids), 
+                 weights = weight,  data = merged)
+
+
+l1 <- linearHypothesis(domestic_z, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(domestic_1, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(domestic_2, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(domestic_3, "pooledF_WIG = reminder_10018", digits = 3)
+l5 <- linearHypothesis(domestic_4, "pooledF_WIG = reminder_10018", digits = 3)
+l6 <- linearHypothesis(domestic_5, "pooledF_WIG = reminder_10018", digits = 3)
+l7 <- linearHypothesis(domestic_6, "pooledF_WIG = reminder_10018", digits = 3)
+l8 <- linearHypothesis(domestic_7, "pooledF_WIG = reminder_10018", digits = 3)
+l9 <- linearHypothesis(domestic_8, "pooledF_WIG = reminder_10018", digits = 3)
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4),
+            round(l4$`Pr(>F)`[2], digits = 4), round(l5$`Pr(>F)`[2], digits = 4), round(l6$`Pr(>F)`[2], digits = 4),
+            round(l7$`Pr(>F)`[2], digits = 4), round(l8$`Pr(>F)`[2], digits = 4), round(l9$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "husb_final_say_num", "husb_provide_inc_num", 
+              "husb_justified_yell_num", "prioritize_educ_num", "future_equal_say_num",
+              "future_equal_rights_num", "husb_justified_beat_num")
+
+Table12A <- stargazer(domestic_z, domestic_1, domestic_2, domestic_3, domestic_4,
+                  domestic_5, domestic_6, domestic_7, domestic_8,
+                  float.env = "sidewaystable",
+                  header=FALSE,          
+                  font.size="footnotesize",
+                  dep.var.labels.include = FALSE,
+                  table.placement = "t",
+                  column.labels=att1_dep_var,
+                  covariate.labels= controls,
+                  omit = omit_var, 
+                  omit.stat=c("n","f", "ser","adj.rsq"), 
+                  add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                  column.sep.width = "2pt",
+                  title = "Treatment effects on attitudes towards gender and marital equality",
+                  type = "latex")
+
+
+
+# Lagged DV
+domestic_z <- lm(zscore ~ pooledF_WIG +reminder_10018 + 
+                   factor(block_ids),
+                 weights = weight, data = merged)
+
+
+domestic_1 <- lm(husb_final_say_end_num ~ pooledF_WIG +reminder_10018 + 
+                   husb_final_say_num +
+                   factor(block_ids),
+                 weights = weight, data = merged)
+
+
+domestic_2 <- lm(husb_inc_end_num ~ pooledF_WIG +reminder_10018 + 
+                   husb_provide_inc_num + 
+                   factor(block_ids),
+                 weights = weight, data = merged)
+
+
+domestic_3 <- lm(husb_just_yell_end_num ~ pooledF_WIG +reminder_10018 + 
+                   husb_justified_yell_num + 
+                   factor(block_ids),
+                 weights = weight, data = merged)
+
+domestic_4 <- lm(woman_work_outside_end_num ~ pooledF_WIG +reminder_10018 + 
+                   factor(block_ids),
+                 weights = weight, data = merged)
+
+domestic_5 <- lm(female_circ_marriage_end_num ~ pooledF_WIG +reminder_10018 + 
+                   factor(block_ids),
+                 weights = weight, na.action = na.omit, data = merged)
+
+domestic_6 <- lm(circ_tf_end_num ~ pooledF_WIG +reminder_10018 + 
+                   factor(block_ids),
+                 weights = weight, na.action = na.omit, data = merged)
+
+domestic_7 <- lm(marriage_age_tf_end_num ~ pooledF_WIG +reminder_10018 + 
+                   factor(block_ids),
+                 weights = weight, na.action = na.omit, data = merged)
+
+domestic_8 <- lm(khul_divorce_tf_end_num ~ pooledF_WIG +reminder_10018 + 
+                   factor(block_ids),
+                 weights = weight, na.action = na.omit, data = merged)
+
+
+l1 <- linearHypothesis(domestic_z, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(domestic_1, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(domestic_2, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(domestic_3, "pooledF_WIG = reminder_10018", digits = 3)
+l5 <- linearHypothesis(domestic_4, "pooledF_WIG = reminder_10018", digits = 3)
+l6 <- linearHypothesis(domestic_5, "pooledF_WIG = reminder_10018", digits = 3)
+l7 <- linearHypothesis(domestic_6, "pooledF_WIG = reminder_10018", digits = 3)
+l8 <- linearHypothesis(domestic_7, "pooledF_WIG = reminder_10018", digits = 3)
+l9 <- linearHypothesis(domestic_8, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4),
+            round(l4$`Pr(>F)`[2], digits = 4), round(l5$`Pr(>F)`[2], digits = 4), round(l6$`Pr(>F)`[2], digits = 4),
+            round(l7$`Pr(>F)`[2], digits = 4), round(l8$`Pr(>F)`[2], digits = 4), round(l9$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "husb_final_say_num", "husb_provide_inc_num", 
+              "husb_justified_yell_num")
+
+Table12B <- stargazer(domestic_z, domestic_1, domestic_2, domestic_3, domestic_4,
+                           domestic_5, domestic_6, domestic_7, domestic_8,
+                           float.env = "sidewaystable",
+                           header=FALSE,          
+                           font.size="footnotesize",
+                           dep.var.labels.include = FALSE,
+                           table.placement = "t",
+                           column.labels=att1_dep_var,
+                           covariate.labels= controls,
+                           omit = omit_var, 
+                           omit.stat=c("f", "ser","adj.rsq"), 
+                           add.lines = list(c("Control Mean", 0, husb_work_att_mean), c("F, WI, WG = TV (p-value)", pvals1)),
+                           column.sep.width = "2pt",
+                           title = "Treatment effects on attitudes towards gender and marital equality",
+                           type = "latex")
+
+
+note.latex <- "\\multicolumn{10}{l} {\\parbox[t]{23cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Husband final say, Husband earn income, Yelling justified, Hitting justified, Male education priority, 
+Future equal say, and Future equal rights.
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table12B[grepl("Note", Table12B)] <- note.latex
+
+
+# Attitudes towards violence outside the household ----------------------------------------------------
+
+att2_dep_var <- c("\\shortstack{index of \\\\ (1,1,-1,1,\\\\1,-1,1,-1)}", 
+                  "\\shortstack{Colleague \\\\ comments \\\\ on female \\\\ look \\\\ sexual \\\\ harassment}", 
+                  "\\shortstack{Verbal \\\\ harassment\\\\ legal \\\\consequences}",
+                  "\\shortstack{Interfere to \\\\ support \\\\a woman \\\\ sexually \\\\harassed \\\\ at workplace}", 
+                  "\\shortstack{Inappropriate\\\\ clothing \\\\ or lack of Hijab \\\\ justifies \\\\ harassment}",
+                  "\\shortstack{Interfere \\\\ if a man \\\\ hits a woman \\\\ on the street}",
+                  "\\shortstack{Interfere if a \\\\man sexually \\\\ harasses  on\\\\ the street}",
+                  "\\shortstack{Avoid \\\\ the authorities \\\\ if your daughter \\\\ sexually \\\\ assaulted}",
+                  "\\shortstack{Seriousness \\\\ of a child \\\\ telling \\\\ that was \\\\ sexually \\\\harassed\\\\ by a relative}")
+
+
+att2 <- merged[c("colleague_comment_looks_end_num", "verbal_harassment_legal_end_num", "intervene_work_harass_end_num", 
+                 "women_clothes_harass_end_num","intervene_hitting_street_num", "you_intervene_harass_end_num", 
+                 "parents_assault_auth_end_num", "child_relative_assault_end_num")]
+
+att2_mean <- round(colMeans(att2[which(merged$control_10018 == 1),]), digits = 3)
+
+# Calculate the z-score
+
+zscore <- scale(rowMeans(scale(att2) %*% diag(c(1,1,1,-1,1,1,-1,1))))
+
+merged$RF_att2_zscore <- zscore
+
+
+
+# All controls
+
+att2_0 <- lm(zscore ~ pooledF_WIG +reminder_10018 + 
+               husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+               husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_1 <- lm(colleague_comment_looks_end_num ~ pooledF_WIG +reminder_10018 + 
+               husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+               husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_2 <- lm(verbal_harassment_legal_end_num ~ pooledF_WIG +reminder_10018 + 
+               husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+               husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+               factor(block_ids),
+             weights = weight,  data = merged)
+
+att2_3 <- lm(intervene_work_harass_end_num ~ pooledF_WIG +reminder_10018 + 
+               husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+               husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_4 <- lm(women_clothes_harass_end_num ~ pooledF_WIG +reminder_10018 + 
+               husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+               husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_5 <- lm(intervene_hitting_street_num ~ pooledF_WIG +reminder_10018 + 
+               husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+               husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_6 <- lm(you_intervene_harass_end_num ~ pooledF_WIG +reminder_10018 + 
+               husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+               husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_7 <- lm(parents_assault_auth_end_num ~ pooledF_WIG +reminder_10018 + 
+               husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+               husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_8 <- lm(child_relative_assault_end_num ~ pooledF_WIG +reminder_10018 + 
+               husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+               husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+
+
+omit_var <- c("Constant","block_ids", "husb_final_say_num", "prioritize_educ_num", 
+              "husb_provide_inc_num", "husb_justified_yell_num", "husb_justified_beat_num",
+              "future_equal_say_num", "future_equal_rights_num")
+
+
+l0 <- linearHypothesis(att2_0, "pooledF_WIG = reminder_10018", digits = 3)
+l1 <- linearHypothesis(att2_1, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(att2_2, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(att2_3, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(att2_4, "pooledF_WIG = reminder_10018", digits = 3)
+l5 <- linearHypothesis(att2_5, "pooledF_WIG = reminder_10018", digits = 3)
+l6 <- linearHypothesis(att2_6, "pooledF_WIG = reminder_10018", digits = 3)
+l7 <- linearHypothesis(att2_7, "pooledF_WIG = reminder_10018", digits = 3)
+l8 <- linearHypothesis(att2_8, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l0$`Pr(>F)`[2], digits = 4), round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), 
+            round(l3$`Pr(>F)`[2], digits = 4), round(l4$`Pr(>F)`[2], digits = 4), round(l5$`Pr(>F)`[2], digits = 4), 
+            round(l6$`Pr(>F)`[2], digits = 4), round(l7$`Pr(>F)`[2], digits = 4),round(l8$`Pr(>F)`[2], digits = 4))
+
+
+Table13A <- stargazer(att2_0, att2_1, att2_2, att2_3, att2_4, att2_5, att2_6, att2_7, att2_8,
+                      float.env = "sidewaystable",
+                     header=FALSE,          
+                     font.size="scriptsize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "t",
+                     column.labels=att2_dep_var,
+                     covariate.labels= controls,
+                     omit = omit_var, 
+                     omit.stat=c("n", "f", "ser","adj.rsq"), 
+                     add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                     column.sep.width = "0pt",
+                     title = "Treatment effect on attitudes on sexual violence",
+                     type = "latex")
+
+
+# Lagged DV
+
+att2_0 <- lm(zscore ~ pooledF_WIG +reminder_10018 + 
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_1 <- lm(colleague_comment_looks_end_num ~ pooledF_WIG +reminder_10018 + 
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_2 <- lm(verbal_harassment_legal_end_num ~ pooledF_WIG +reminder_10018 + 
+               factor(block_ids),
+             weights = weight, data = merged)
+
+att2_3 <- lm(intervene_work_harass_end_num ~ pooledF_WIG +reminder_10018 + 
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_4 <- lm(women_clothes_harass_end_num ~ pooledF_WIG +reminder_10018 + 
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_5 <- lm(intervene_hitting_street_num ~ pooledF_WIG +reminder_10018 + 
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_6 <- lm(you_intervene_harass_end_num ~ pooledF_WIG +reminder_10018 + 
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_7 <- lm(parents_assault_auth_end_num ~ pooledF_WIG +reminder_10018 + 
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+att2_8 <- lm(child_relative_assault_end_num ~ pooledF_WIG +reminder_10018 + 
+               factor(block_ids),
+             weights = weight, na.action = na.omit, data = merged)
+
+
+l0 <- linearHypothesis(att2_0, "pooledF_WIG = reminder_10018", digits = 3)
+l1 <- linearHypothesis(att2_1, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(att2_2, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(att2_3, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(att2_4, "pooledF_WIG = reminder_10018", digits = 3)
+l5 <- linearHypothesis(att2_5, "pooledF_WIG = reminder_10018", digits = 3)
+l6 <- linearHypothesis(att2_6, "pooledF_WIG = reminder_10018", digits = 3)
+l7 <- linearHypothesis(att2_7, "pooledF_WIG = reminder_10018", digits = 3)
+l8 <- linearHypothesis(att2_8, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l0$`Pr(>F)`[2], digits = 4), round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), 
+            round(l3$`Pr(>F)`[2], digits = 4), round(l4$`Pr(>F)`[2], digits = 4), round(l5$`Pr(>F)`[2], digits = 4), 
+            round(l6$`Pr(>F)`[2], digits = 4), round(l7$`Pr(>F)`[2], digits = 4),round(l8$`Pr(>F)`[2], digits = 4))
+
+
+Table13B <- stargazer(att2_0, att2_1, att2_2, att2_3, att2_4, att2_5, att2_6, att2_7, att2_8,
+                      float.env = "sidewaystable",
+                       header=FALSE,          
+                       font.size="scriptsize",
+                       dep.var.labels.include = FALSE,
+                       table.placement = "t",
+                       column.labels=att2_dep_var,
+                       covariate.labels= controls,
+                       omit = c("Constant","block_ids"), 
+                       omit.stat=c("f", "ser","adj.rsq"), 
+                       add.lines = list(c("Control Mean", 0, att2_mean), c("F, WI, WG = TV (p-value)", pvals1)),
+                       column.sep.width = "0pt",
+                       title = "Treatment effect on attitudes on sexual violence",
+                       type = "latex")
+
+
+note.latex <- "\\multicolumn{10}{l} {\\parbox[t]{21cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Husband final say, Husband earn income, Yelling justified, Hitting justified, Male education priority, 
+Future equal say, and Future equal rights.
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table13B[grepl("Note", Table13B)] <- note.latex
+
+
+# Revealed Preference -------------------------------------------------------------
+
+donation <- merged[c("donation__end_cont", "donation_end_num")]
+
+donation_mean <- round(colMeans(donation[which(merged$control_10018 == 1),]), digits = 3)
+
+zscore <- scale(rowMeans(scale(donation) %*% diag(c(1, 1))))
+
+merged$RF_preference_zscore <- zscore
+
+don_0 <-lm(zscore ~ pooledF_WIG  + reminder_10018 + 
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+
+don_1 <-lm(donation__end_cont ~ pooledF_WIG  + reminder_10018 + 
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+don_2 <-lm(donation_end_num ~ pooledF_WIG  + reminder_10018 + 
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+
+l1 <- linearHypothesis(don_0, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(don_1, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(don_2, "pooledF_WIG = reminder_10018", digits = 3)
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+
+don_dep <- c("Index of (1,1)", 
+             "Donation in EGP", 
+             "\\shortstack{Donating more \\\\ than 0 EGP}")
+
+
+Table14 <- stargazer(don_0, don_1, don_2, 
+                         header=FALSE,          
+                         font.size="footnotesize",
+                         dep.var.labels.include = FALSE,
+                         table.placement = "H",
+                         column.labels=don_dep,
+                         covariate.labels= controls,
+                         omit = c("Constant","block_ids"), 
+                         omit.stat=c("f", "ser","adj.rsq"), 
+                         add.lines = list(c("Control Mean", 0, donation_mean), c("F, WI, WG = TV (p-value)", pvals1)),
+                         column.sep.width = "20pt",
+                         title = "Treatment effect on donation to organizations supporting women",
+                         type = "latex")
+
+
+note.latex <- "\\multicolumn{4}{l} {\\parbox[t]{13cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table14[grepl("Note", Table14)] <- note.latex
+
+
+# Reduced form for behavior and reporting during COVID-19 ------------------------------------------------
+
+rep_during_data <- merged[c("dcovid_yelled_end_num","dcovid_hit_end_num","dcovid_assault_end_num")]
+
+rep_during_control <- round(colMeans(rep_during_data[which(merged$control_10018 == 1),]), digits = 3)
+
+zscore <- scale(rowMeans(scale(rep_during_data) %*% diag(c(1, 1, 1))))
+
+merged$RF_dcovid_zscore <- zscore
+
+
+dep_var_re <- c("\\shortstack{Index of \\\\ (1,1,1)}", 
+                "\\shortstack{Heard of or \\\\ experienced yelling}", 
+                "\\shortstack{Heard of or \\\\ experienced hitting}", 
+                "\\shortstack{Heard of or \\\\ experienced sexual \\\\ abuse}")
+
+merged$dcovid_yelled_end_num_refuse <- ifelse(merged$dcovid_yelled_end == "I refuse to answer", 1, 0)
+merged$dcovid_hit_end_num_refuse <- ifelse(merged$dcovid_hit_end == "I refuse to answer", 1, 0)
+merged$dcovid_assault_end_num_refuse <- ifelse(merged$dcovid_assault_end == "I refuse to answer", 1, 0)
+
+
+# All controls
+
+d_zscore <-lm(zscore ~ pooledF_WIG +reminder_10018 + 
+                bc19_yell_num + dc19_yell_num + bc19_hit_num + dc19_hit_num  + 
+                dcovid_yelled_end_num_refuse + dcovid_hit_end_num_refuse + dcovid_assault_end_num_refuse + 
+                factor(block_ids),
+              weights = weight, data = merged)
+
+
+dc_yell <- lm(dcovid_yelled_end_num ~ pooledF_WIG +reminder_10018 + 
+                bc19_yell_num + dc19_yell_num + bc19_hit_num + dc19_hit_num + dcovid_yelled_end_num_refuse +
+                factor(block_ids),
+              weights = weight, data = merged)
+
+dc_hit <- lm(dcovid_hit_end_num ~ pooledF_WIG +reminder_10018 +
+               bc19_yell_num + dc19_yell_num + bc19_hit_num + dc19_hit_num + dcovid_hit_end_num_refuse +
+               factor(block_ids),
+             weights = weight, data = merged)
+
+dc_assa <- lm(dcovid_assault_end_num ~ pooledF_WIG +reminder_10018 + 
+                bc19_yell_num + dc19_yell_num + bc19_hit_num + dc19_hit_num + dcovid_assault_end_num_refuse +
+                factor(block_ids),
+              weights = weight, data = merged)
+
+
+omit_var <- c("Constant","block_ids", "bc19_yell_num", "dc19_yell_num", "bc19_hit_num", "dc19_hit_num",
+              "dcovid_yelled_end_num_refuse", 
+              "dcovid_hit_end_num_refuse", "dcovid_assault_end_num_refuse")
+
+
+l1 <- linearHypothesis(d_zscore, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(dc_yell, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(dc_hit, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(dc_assa, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4),
+            round(l4$`Pr(>F)`[2], digits = 4))
+
+Table15A <- stargazer(d_zscore, dc_yell, dc_hit, dc_assa,
+                           header=FALSE,          
+                           font.size="footnotesize",
+                           dep.var.labels.include = FALSE,
+                           table.placement = "H",
+                           column.labels=dep_var_re,
+                           covariate.labels= controls,
+                           omit = omit_var, 
+                           omit.stat=c("n", "f", "ser","adj.rsq"), 
+                           add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                           column.sep.width = "5pt",
+                           title = "Treatment effect on domestic and sexual violence experienced during COVID-19",
+                           type = "latex")
+
+
+# Lagged DP Variable
+
+d_zscore <-lm(zscore ~ pooledF_WIG +reminder_10018 + dcovid_yelled_end_num_refuse +
+                dcovid_hit_end_num_refuse + dcovid_assault_end_num_refuse + 
+                factor(block_ids),
+              weights = weight, data = merged)
+
+
+dc_yell <- lm(dcovid_yelled_end_num ~ pooledF_WIG +reminder_10018 + 
+                dc19_yell_num + dcovid_yelled_end_num_refuse +
+                factor(block_ids),
+              weights = weight, data = merged)
+
+dc_hit <- lm(dcovid_hit_end_num ~ pooledF_WIG +reminder_10018 +
+               dc19_hit_num + dcovid_hit_end_num_refuse +
+               factor(block_ids),
+             weights = weight, data = merged)
+
+dc_assa <- lm(dcovid_assault_end_num ~ pooledF_WIG +reminder_10018 + 
+                dcovid_assault_end_num_refuse +
+                factor(block_ids),
+              weights = weight, data = merged)
+
+l1 <- linearHypothesis(d_zscore, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(dc_yell, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(dc_hit, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(dc_assa, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4),
+            round(l4$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "dcovid_yelled_end_num_refuse", "dc19_yell_num", "dc19_hit_num",
+              "dcovid_hit_end_num_refuse", "dcovid_assault_end_num_refuse")
+
+Table15B <- stargazer(d_zscore, dc_yell, dc_hit, dc_assa,
+                             align = TRUE,        
+                             header=FALSE,          
+                             font.size="footnotesize",
+                             dep.var.labels.include = FALSE,
+                             table.placement = "H",
+                             column.labels=dep_var_re,
+                             covariate.labels= controls,
+                             omit = omit_var, 
+                             omit.stat=c("f", "ser","adj.rsq"), 
+                             add.lines = list(c("Control Mean", 0, rep_during_control), c("F, WI, WG = TV (p-value)", pvals1)),
+                             column.sep.width = "5pt",
+                             title = "Treatment effect on domestic and sexual violence experienced during COVID-19",
+                             type = "latex",
+                             out = "Table15B")
+
+
+
+note.latex <- "\\multicolumn{5}{l} {\\parbox[t]{15cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Before COVID-19 heard of or experienced yelling, Before COVID-19 heard of or experienced hitting, 
+During COVID-19 heard of or experienced yelling, and During COVID-19 heard of or experienced hitting
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}}\\\\"
+Table15B[grepl("Note", Table15B)] <- note.latex
+
+
+# 4 - 5: DV look online for resources or org ---------------------------------------------------------------------------------
+
+hyp_be <- merged[c("dv_onlineres_end_num", "dv_contactorg_end_num")]
+
+hyp_mean_1 <- round(colMeans(hyp_be[which(merged$control_10018 == 1),]), digits = 3)
+
+zscore <- scale(rowMeans(scale(hyp_be) %*% diag(c(1, 1))))
+
+merged$RF_hypDM2_zscore <- zscore
+
+
+hyp_dep_1 <- c("\\shortstack{Index of \\\\ (1,1)}",
+               "\\shortstack{Would use \\\\ online resources}",
+               "\\shortstack{Would contact \\\\ organization}")
+
+# All family controls
+
+hyp_0 <-lm(zscore ~ pooledF_WIG  + reminder_10018 + 
+             talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+hyp_1 <-lm(dv_onlineres_end_num ~ pooledF_WIG  + reminder_10018 + 
+             talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+hyp_2 <-lm(dv_contactorg_end_num ~ pooledF_WIG  + reminder_10018 + 
+             talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+l1 <- linearHypothesis(hyp_0, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(hyp_1, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(hyp_2, "pooledF_WIG = reminder_10018", digits = 3)
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+omit_var <-c("Constant", "block_ids", "talk_husband_num", "talk_family_num", 
+             "report_authorities_num", "look_online_num", "contact_org_num")
+
+#  need to add "Content Watched", "Most Liked Topics"
+
+Table16A <- stargazer(hyp_0, hyp_1, hyp_2,
+                     header=FALSE,          
+                     font.size="footnotesize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "H",
+                     column.labels=hyp_dep_1,
+                     covariate.labels= controls,
+                     omit = omit_var, 
+                     omit.stat=c("n", "f", "ser","adj.rsq"), 
+                     add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                     column.sep.width = "20pt",
+                     title = "Treatment effect on hypothetical use of online resources and contact with an organization when responding to domestic violence",
+                     type = "latex")
+
+
+# Lagged DV
+
+hyp_1 <-lm(zscore ~ pooledF_WIG  + reminder_10018 + 
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+hyp_2 <-lm(dv_onlineres_end_num ~ pooledF_WIG  + reminder_10018 + 
+             look_online_num +
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+hyp_3 <-lm(dv_contactorg_end_num ~ pooledF_WIG  + reminder_10018 + 
+             contact_org_num +
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+l1 <- linearHypothesis(hyp_1, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(hyp_2, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(hyp_3, "pooledF_WIG = reminder_10018", digits = 3)
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+omit_var <-c("Constant", "block_ids", "look_online_num", "contact_org_num")
+
+Table16B <- stargazer(hyp_1, hyp_2, hyp_3,
+                  header=FALSE,          
+                  font.size="footnotesize",
+                  dep.var.labels.include = FALSE,
+                  table.placement = "H",
+                  column.labels=hyp_dep_1,
+                  covariate.labels= controls,
+                  omit = omit_var, 
+                  omit.stat=c("f", "ser","adj.rsq"), 
+                  add.lines = list(c("Control Mean", 0, hyp_mean_1), c("F, WI, WG = TV (p-value)", pvals1)),
+                  column.sep.width = "20pt",
+                  title = "Treatment effect on hypothetical use of online resources and contact with an organization when responding to domestic violence",
+                  type = "latex")
+
+
+note.latex <- "\\multicolumn{4}{l} {\\parbox[t]{12cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Would talk husband, Would talk family, would report authorities, 
+Would use online resources, and Would contact organization. 
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}}\\\\"
+Table16B[grepl("Note", Table16B)] <- note.latex
+
+
+# Variables contact or look organization/online resources -----------
+hyp_be_2 <- merged[c("sa_onlineres_end_num", "sa_contactorg_end_num")]
+
+hyp_mean_2 <- round(colMeans(hyp_be_2[which(merged$control_10018 == 1),]), digits = 3)
+
+zscore <- scale(rowMeans(scale(hyp_be_2) %*% diag(c(1, 1))))
+
+merged$RF_hypSA2_zscore <- zscore
+
+hyp_dep_2 <- c("\\shortstack{Index of \\\\ (1,1)}", 
+               "\\shortstack{Would use \\\\ online resources}",
+               "\\shortstack{Would contact \\\\ organization}")
+
+# All controls
+
+hyp_0 <- lm(zscore ~ pooledF_WIG  + reminder_10018 +
+              talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+
+hyp_1 <-lm(sa_onlineres_end_num ~ pooledF_WIG  + reminder_10018 +
+             talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+             factor(block_ids),
+           weights = weight,
+           data = merged)
+
+hyp_2 <-lm(sa_contactorg_end_num ~ pooledF_WIG  + reminder_10018 +
+             talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+             factor(block_ids),
+           weights = weight,
+           data = merged)
+
+l1 <- linearHypothesis(hyp_0, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(hyp_1, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(hyp_2, "pooledF_WIG = reminder_10018", digits = 3)
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+omit_var <- c("Constant", "block_ids", "talk_husband_num", "talk_family_num", 
+              "report_authorities_num", "look_online_num", "contact_org_num")
+
+Table17A <- stargazer(hyp_0, hyp_1, hyp_2,
+                     header=FALSE,
+                     font.size="footnotesize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "H",
+                     column.labels=hyp_dep_2,
+                     covariate.labels= controls,
+                     omit = omit_var,
+                     omit.stat=c("n", "f", "ser","adj.rsq"),
+                     add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                     column.sep.width = "10pt",
+                     title = "Treatment effect on  hypothetical use of online resources and contact with an organization when responding to sexual violence",
+                     type = "latex")
+
+# Lagged DV
+
+hyp_0 <-lm(zscore ~ pooledF_WIG  + reminder_10018 +
+             factor(block_ids),
+           weights = weight,
+           data = merged)
+
+
+hyp_1 <-lm(sa_onlineres_end_num ~ pooledF_WIG  + reminder_10018 +
+             factor(block_ids),
+           weights = weight,
+           data = merged)
+
+hyp_2 <-lm(sa_contactorg_end_num ~ pooledF_WIG  + reminder_10018 +
+             factor(block_ids),
+           weights = weight,
+           data = merged)
+
+l1 <- linearHypothesis(hyp_0, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(hyp_1, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(hyp_2, "pooledF_WIG = reminder_10018", digits = 3)
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+Table17B <- stargazer(hyp_0, hyp_1, hyp_2,
+                     header=FALSE,
+                     font.size="footnotesize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "H",
+                     column.labels=hyp_dep_2,
+                     covariate.labels= controls,
+                     omit = c("Constant", "block_ids"),
+                     omit.stat=c("f", "ser","adj.rsq"),
+                     add.lines = list(c("Control Mean", 0, hyp_mean_2), c("F, WI, WG = TV (p-value)", pvals1)),
+                     column.sep.width = "10pt",
+                     title = "Treatment effect on  hypothetical use of online resources and contact with an organization when responding to sexual violence",
+                     type = "latex")
+
+
+note.latex <- "\\multicolumn{4}{l} {\\parbox[t]{11cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Would talk husband, Would talk family, would report authorities, 
+Would use online resources, and Would contact organization. 
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}}  \\\\"
+Table17B[grepl("Note", Table17B)] <- note.latex
+
+
+
+# During COVID-19 ------------------------------------------------------------
+
+know_during <- merged[c("dcovid_accessonline_end_num","dcovid_contactorg_end_num")]
+
+know_during_mean <- round(colMeans(know_during[which(merged$control_10018 == 1),]), digits = 3)
+
+during_zscore <- scale(rowMeans(scale(know_during)%*% diag(c(1, 1))))
+
+merged$RF_dcovid2_zscore <- during_zscore
+
+
+merged$dcovid_accessonline_end_num_refuse <- ifelse(merged$dcovid_accessonline_end == "I refuse to answer", 1, 0)
+merged$dcovid_accessonline_end_num_refuse <- replace_na(merged$dcovid_accessonline_end_num_refuse, 1)
+
+merged$dcovid_contactorg_end_num_refuse <- ifelse(merged$dcovid_contactorg_end == "I refuse to answer", 1, 0)
+merged$dcovid_contactorg_end_num_refuse <- replace_na(merged$dcovid_contactorg_end_num_refuse, 1)
+
+know_during_var <- c("\\shortstack{Index of \\\\ (1,1) }", 
+                     "\\shortstack{Used online\\\\ resources}", 
+                     "\\shortstack{Contacted \\\\ organization}")
+
+
+# All Controls
+
+zs <-lm(during_zscore ~ pooledF_WIG  + reminder_10018 + 
+          know_online_valid_noaut_num + bc19_look_online_num + dc19_look_online_num + bc19_look_org_num + dc19_look_org_num +
+          dcovid_accessonline_end_num_refuse + dcovid_contactorg_end_num_refuse + know_org_noaut_valid_num +know_online_nehad_num + 
+          know_org_nehad_num +
+          factor(block_ids), 
+        weights = weight, 
+        data = merged)
+
+
+dc_accesson <-lm(dcovid_accessonline_end_num ~ pooledF_WIG  + reminder_10018 + 
+                   know_online_valid_noaut_num + bc19_look_online_num + dc19_look_online_num + bc19_look_org_num + dc19_look_org_num +
+                   dcovid_accessonline_end_num_refuse + know_org_noaut_valid_num +know_online_nehad_num + know_org_nehad_num +
+                   factor(block_ids), 
+                 weights = weight, 
+                 data = merged)
+
+
+dc_contactorg <-lm(dcovid_contactorg_end_num ~ pooledF_WIG  + reminder_10018 + 
+                     know_online_valid_noaut_num + bc19_look_online_num + dc19_look_online_num + bc19_look_org_num + dc19_look_org_num +
+                     dcovid_contactorg_end_num_refuse + know_org_noaut_valid_num + know_online_nehad_num + know_org_nehad_num +
+                     factor(block_ids), 
+                   weights = weight, 
+                   data = merged)
+
+l1 <- linearHypothesis(zs, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(dc_accesson, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(dc_contactorg, "pooledF_WIG = reminder_10018", digits = 3)
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "know_online_valid_noaut_num", "dc19_look_online_num", "bc19_look_online_num", "bc19_look_org_num",
+              "dc19_look_org_num", "dcovid_accessonline_end_num_refuse", "dcovid_contactorg_end_num_refuse", "know_org_noaut_valid_num",
+              "know_online_nehad_num", "know_org_nehad_num")
+
+Table18A <- stargazer(zs, dc_accesson, dc_contactorg,
+                             header=FALSE,          
+                             font.size="footnotesize",
+                             dep.var.labels.include = FALSE,
+                             table.placement = "H",
+                             column.labels=know_during_var,
+                             covariate.labels= controls,
+                             omit = omit_var, 
+                             omit.stat=c("n", "f", "ser","adj.rsq"), 
+                             add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                             column.sep.width = "25pt",
+                             title = "Treatment effect on recent use of online resources and contact with an organization during COVID-19",
+                             type = "latex")
+
+# Lagged DV
+
+zs <-lm(during_zscore ~ pooledF_WIG  + reminder_10018 + 
+          dcovid_accessonline_end_num_refuse + dcovid_contactorg_end_num_refuse +
+          factor(block_ids), 
+        weights = weight, 
+        data = merged)
+
+dc_accesson <-lm(dcovid_accessonline_end_num ~ pooledF_WIG  + reminder_10018 + 
+                   dcovid_accessonline_end_num_refuse + dc19_look_online_num +
+                   factor(block_ids), 
+                 weights = weight, 
+                 data = merged)
+
+dc_contactorg <-lm(dcovid_contactorg_end_num ~ pooledF_WIG  + reminder_10018 + 
+                     dcovid_contactorg_end_num_refuse + dc19_look_org_num +
+                     factor(block_ids), 
+                   weights = weight, 
+                   data = merged)
+
+l1 <- linearHypothesis(zs, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(dc_accesson, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(dc_contactorg, "pooledF_WIG = reminder_10018", digits = 3)
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+omit_var <- c("Constant","block_ids", "dc19_look_online_num", 
+              "dc19_look_org_num", "dcovid_accessonline_end_num_refuse", "dcovid_contactorg_end_num_refuse")
+
+Table18B <- stargazer(zs, dc_accesson, dc_contactorg,
+                            header=FALSE,          
+                            font.size="footnotesize",
+                            dep.var.labels.include = FALSE,
+                            table.placement = "H",
+                            column.labels=know_during_var,
+                            covariate.labels= controls,
+                            omit = omit_var, 
+                            omit.stat=c("f", "ser","adj.rsq"), 
+                            add.lines = list(c("Control Mean", 0, know_during_mean), c("F, WI, WG = TV (p-value)", pvals1)),
+                            column.sep.width = "25pt",
+                            title = "Treatment effect on recent use of online resources and contact with an organization during COVID-19",
+                            type = "latex")
+
+note.latex <- "\\multicolumn{4}{l} {\\parbox[t]{11.5cm}{ \\textit{Notes:}  
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Know online: other than ECWR, Know online: ECWR, Before COVID-19 used online resources, 
+During COVID-19 used online resources, Know organization: other than ECWR, Know organization: ECWR
+Before COVID-19 contacted organization, and During COVID-19 contacted organization.
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table18B[grepl("Note", Table18B)] <- note.latex
+
+
+# -----------------------------------------------------------------------------------------------
+# Part 3
+# Future Outlook
+
+fut_out <- merged[c("future_equal_say_end_num","future_equal_rights_end_num")]
+
+fut_out_mean <- round(colMeans(fut_out[which(merged$control_10018 == 1),]), digits = 3)
+fo_dep_var <- c("\\shortstack{Index of \\\\(1,1)}", 
+                "\\shortstack{Future\\\\ equal say}", 
+                "\\shortstack{Future \\\\ equal rights}")
+
+
+# Calculate the z-score
+zscore <- scale(rowMeans(scale(fut_out) %*% diag(c(1,1))))
+
+merged$RF_fo_zscore <- zscore
+
+
+# All family variables controls 
+fo_0 <- lm(zscore ~ pooledF_WIG +reminder_10018 + 
+             husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+             husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+             factor(block_ids),
+           weights = weight, data = merged)
+
+fo_1 <- lm(future_equal_say_end_num ~ pooledF_WIG +reminder_10018 + 
+             husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+             husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+             factor(block_ids),
+           weights = weight, data = merged)
+
+
+fo_2 <- lm(future_equal_rights_end_num ~ pooledF_WIG +reminder_10018 + 
+             husb_final_say_num + prioritize_educ_num + husb_provide_inc_num + husb_justified_yell_num + 
+             husb_justified_beat_num + future_equal_say_num + future_equal_rights_num +
+             factor(block_ids),
+           weights = weight,  data = merged)
+
+
+l1 <- linearHypothesis(fo_0, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(fo_1, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(fo_2, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "husb_final_say_num", "prioritize_educ_num", "husb_provide_inc_num",
+              "husb_justified_yell_num", "husb_justified_beat_num", "future_equal_say_num", "future_equal_rights_num")
+
+
+Table19A <- stargazer(fo_0, fo_1, fo_2,
+                   header=FALSE, 
+                   font.size="footnotesize",
+                   dep.var.labels.include = FALSE,
+                   table.placement = "H",
+                   column.labels=fo_dep_var,
+                   covariate.labels= controls,
+                   omit = omit_var, 
+                   omit.stat=c("n", "f", "ser","adj.rsq"), 
+                   add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                   column.sep.width = "20pt",
+                   title = "Treatment effect on views on women's future outlook toward gender and marital equality",
+                   type = "latex")
+
+
+
+# DV lagged controls
+
+fo_0 <- lm(zscore ~ pooledF_WIG +reminder_10018 + 
+             factor(block_ids),
+           weights = weight, data = merged)
+
+
+fo_1 <- lm(future_equal_say_end_num ~ pooledF_WIG +reminder_10018 + 
+             future_equal_say_num +
+             factor(block_ids),
+           weights = weight, data = merged)
+
+
+fo_2 <- lm(future_equal_rights_end_num ~ pooledF_WIG +reminder_10018 + 
+             future_equal_rights_num +
+             factor(block_ids),
+           weights = weight,  data = merged)
+
+
+l1 <- linearHypothesis(fo_0, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(fo_1, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(fo_2, "pooledF_WIG = reminder_10018", digits = 3)
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <-c("Constant","block_ids", "future_equal_say_num", "future_equal_rights_num")
+
+
+Table19B <- stargazer(fo_0, fo_1, fo_2,
+                      header=FALSE, 
+                      font.size="footnotesize",
+                      dep.var.labels.include = FALSE,
+                      table.placement = "H",
+                      column.labels=fo_dep_var,
+                      covariate.labels= controls,
+                      omit = omit_var, 
+                      omit.stat=c("f", "ser","adj.rsq"), 
+                      add.lines = list(c("Control Mean", 0, fut_out_mean), c("F, WI, WG = TV (p-value)", pvals1)),
+                      column.sep.width = "20pt",
+                      title = "Treatment effect on views on women's future outlook toward gender and marital equality",
+                      type = "latex")
+
+
+note.latex <- "\\multicolumn{4}{l} {\\parbox[t]{11cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Husband final say, Husband earn income, Yelling justified, Hitting justified, Male education priority, 
+Future equal say, and Future equal rights.
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}}  \\\\"
+Table19B[grepl("Note", Table19B)] <- note.latex
+
+
+# Hypothetical Behavior -----------------------------------------------------------
+# Domestic Violence, Sexual Assault, or Harassment
+
+# dv_talkhusb_end_num
+# dv_talktfam_end_num
+# dv_report_end_num
+# dv_onlineres_end_num
+# dv_contactorg_end_num
+# sa_talkfam_end_num
+# sa_report_end_num
+# sa_onlineres_end_num
+# sa_contactorg_end_num
+
+
+# Reduced form for hypothetical behavior around domestic violence (DV) variables,part 2
+
+hyp_be <- merged[c("dv_talkhusb_end_num", "dv_talktfam_end_num", "dv_report_end_num")]
+
+hyp_mean_1 <- round(colMeans(hyp_be[which(merged$control_10018 == 1),]), digits = 3)
+
+zscore <- scale(rowMeans(scale(hyp_be) %*% diag(c(1, 1, 1))))
+
+merged$RF_hypDM1_zscore <- zscore
+
+
+hyp_dep_1 <- c("\\shortstack{Index of \\\\ (1,1,1)}", 
+               "\\shortstack{Would \\\\ talk husband}", 
+               "\\shortstack{Would \\\\ talk family}", 
+               "\\shortstack{Would \\\\ report \\\\ authorities}")
+
+
+# All family controls
+
+hyp_0 <-lm(zscore ~ pooledF_WIG  + reminder_10018 + 
+             talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+hyp_1 <-lm(dv_talkhusb_end_num ~ pooledF_WIG  + reminder_10018 + 
+             talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+hyp_2 <-lm(dv_talktfam_end_num ~ pooledF_WIG  + reminder_10018 + 
+             talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+hyp_3 <-lm(dv_report_end_num ~ pooledF_WIG  + reminder_10018 + 
+             talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+
+l1 <- linearHypothesis(hyp_0, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(hyp_1, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(hyp_2, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(hyp_3, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4),
+            round(l4$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <-c("Constant", "block_ids", "talk_husband_num", "talk_family_num", 
+             "report_authorities_num", "look_online_num", "contact_org_num")
+
+#  need to add "Content Watched", "Most Liked Topics"
+
+Table20A <- stargazer(hyp_0, hyp_1, hyp_2, hyp_3,
+                     header=FALSE,          
+                     font.size="footnotesize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "H",
+                     column.labels=hyp_dep_1,
+                     covariate.labels= controls,
+                     omit = omit_var, 
+                     omit.stat=c("n", "f", "ser","adj.rsq"), 
+                     add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                     column.sep.width = "20pt",
+                     title = "Treatment effect of hypothetical talking to husband and family members, or reporting to authorities when responding to domestic violence",
+                     type = "latex")
+
+
+# Only DV lagged control 
+hyp_1 <-lm(zscore ~ pooledF_WIG  + reminder_10018 + 
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+hyp_2 <-lm(dv_talkhusb_end_num ~ pooledF_WIG  + reminder_10018 + 
+             talk_husband_num +
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+hyp_3 <-lm(dv_talktfam_end_num ~ pooledF_WIG  + reminder_10018 + 
+             talk_family_num +
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+hyp_4 <-lm(dv_report_end_num ~ pooledF_WIG  + reminder_10018 + 
+             report_authorities_num +
+             factor(block_ids), 
+           weights = weight, 
+           data = merged)
+
+l1 <- linearHypothesis(hyp_1, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(hyp_2, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(hyp_3, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(hyp_4, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4),
+            round(l4$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <-c("Constant", "block_ids", "talk_husband_num", "talk_family_num", 
+             "report_authorities_num")
+
+
+Table20B <- stargazer(hyp_1, hyp_2, hyp_3, hyp_4,
+                  header=FALSE,          
+                  font.size="footnotesize",
+                  dep.var.labels.include = FALSE,
+                  table.placement = "H",
+                  column.labels=hyp_dep_1,
+                  covariate.labels= controls,
+                  omit = omit_var, 
+                  omit.stat=c("f", "ser","adj.rsq"), 
+                  add.lines = list(c("Control Mean", 0, hyp_mean_1), c("F, WI, WG = TV (p-value)", pvals1)),
+                  column.sep.width = "20pt",
+                  title = "Treatment effect of hypothetical talking to husband and family members, or reporting to authorities when responding to domestic violence",
+                  type = "latex")
+
+
+note.latex <- "\\multicolumn{5}{l} {\\parbox[t]{13cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Would talk husband, Would talk family, would report authorities, 
+Would use online resources, and Would contact organization. 
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}}\\\\"
+Table20B[grepl("Note", Table20B)] <- note.latex
+
+
+# Part 2: Sexual Assault or Harassment --------------------------------------
+
+
+hyp_be_2 <- merged[c("sa_talkfam_end_num", "sa_report_end_num")]
+
+hyp_mean_2 <- round(colMeans(hyp_be_2[which(merged$control_10018 == 1),]), digits = 3)
+
+zscore <- scale(rowMeans(scale(hyp_be_2) %*% diag(c(1, 1))))
+
+merged$RF_hypSA1_zscore <- zscore
+
+
+hyp_dep_2 <- c("\\shortstack{Index of \\\\ (1,1)}", 
+               "\\shortstack{Would  \\\\ talk family}", 
+               "\\shortstack{Would \\\\  report  \\\\ authorities}")
+
+
+# All controls
+
+hyp_0 <- lm(zscore ~ pooledF_WIG  + reminder_10018 +
+              talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+              factor(block_ids),
+            weights = weight,
+            data = merged)
+
+
+hyp_1 <-lm(sa_talkfam_end_num ~ pooledF_WIG  + reminder_10018 +
+             talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+             factor(block_ids),
+           weights = weight,
+           data = merged)
+
+hyp_2 <-lm(sa_report_end_num ~ pooledF_WIG  + reminder_10018 +
+             talk_husband_num + talk_family_num + report_authorities_num + look_online_num + contact_org_num +
+             factor(block_ids),
+           weights = weight,
+           data = merged)
+
+l1 <- linearHypothesis(hyp_0, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(hyp_1, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(hyp_2, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant", "block_ids", "talk_husband_num", "talk_family_num", 
+              "report_authorities_num", "look_online_num", "contact_org_num")
+
+Table21A <- stargazer(hyp_0, hyp_1, hyp_2,
+                     header=FALSE,
+                     font.size="footnotesize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "H",
+                     column.labels=hyp_dep_2,
+                     covariate.labels= controls,
+                     omit = omit_var,
+                     omit.stat=c("n", "f", "ser","adj.rsq"),
+                     add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                     column.sep.width = "20pt",
+                     title = "Treatment effect of hypothetical talking to family members or reporting to authorities when responding to sexual violence",
+                     type = "latex")
+
+
+# Only DV lagged control 
+hyp_0 <-lm(zscore ~ pooledF_WIG  + reminder_10018 +
+             factor(block_ids),
+           weights = weight,
+           data = merged)
+
+hyp_1 <-lm(sa_talkfam_end_num ~ pooledF_WIG  + reminder_10018 +
+             factor(block_ids),
+           weights = weight,
+           data = merged)
+
+hyp_2 <-lm(sa_report_end_num ~ pooledF_WIG  + reminder_10018 +
+             factor(block_ids),
+           weights = weight,
+           data = merged)
+
+
+l1 <- linearHypothesis(hyp_0, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(hyp_1, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(hyp_2, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+
+Table21B <- stargazer(hyp_0, hyp_1, hyp_2,
+                     header=FALSE,
+                     font.size="footnotesize",
+                     dep.var.labels.include = FALSE,
+                     table.placement = "H",
+                     column.labels=hyp_dep_2,
+                     covariate.labels= controls,
+                     omit = c("Constant", "block_ids"),
+                     omit.stat=c("f", "ser","adj.rsq"),
+                     add.lines = list(c("Control Mean", 0, hyp_mean_2), c("F, WI, WG = TV (p-value)", pvals1)),
+                     column.sep.width = "20pt",
+                     title = "Treatment effect of hypothetical talking to family members or reporting to authorities when responding to sexual violence",
+                     type = "latex")
+
+
+note.latex <- "\\multicolumn{4}{l} {\\parbox[t]{11cm}{ \\textit{Notes:}  
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Would talk husband, Would talk family, would report authorities, 
+Would use online resources, and Would contact organization. 
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}}  \\\\"
+Table21B[grepl("Note", Table21B)] <- note.latex
+
+
+# Behavior and Reporting (part of Observed Behavior) ----------------------------
+# Controls
+# "bc19_yell_num",
+# "dc19_yell_num",
+# "bc19_hit_num",
+# "dc19_hit_num"
+
+# BEFORE COVID ------------------------------------------------------------------------------
+
+
+rep_before_data <- merged[c("bcovid_yelled_end_num", "bcovid_hit_end_num", "bcovid_assault_end_num")]
+
+rep_before_control <- round(colMeans(rep_before_data[which(merged$control_10018 == 1),]), digits = 3)
+
+zscore <- scale(rowMeans(scale(rep_before_data) %*% diag(c(1, 1, 1))))
+
+merged$RT_bcovid_zscore <- zscore
+
+merged$bcovid_yelled_end_num_refuse <- ifelse(merged$bcovid_yelled_end == "I refuse to answer", 1, 0)
+merged$bcovid_hit_end_num_refuse <- ifelse(merged$bcovid_hit_end == "I refuse to answer", 1, 0)
+merged$bcovid_assault_end_num_refuse <- ifelse(merged$bcovid_assault_end == "I refuse to answer", 1, 0)
+
+dep_var_re <- c("\\shortstack{Index of \\\\ (1,1,1)}",
+                "\\shortstack{Heard of or\\\\experienced yelling}", 
+                "\\shortstack{Heard of or\\\\experienced hitting}", 
+                "\\shortstack{Heard of or\\\\experienced sexual \\\\abuse}")
+
+
+# All controls
+
+b_zscore <- lm(zscore ~ pooledF_WIG +reminder_10018 + 
+                 bc19_yell_num + dc19_yell_num + bc19_hit_num + dc19_hit_num  +
+                 bcovid_yelled_end_num_refuse + bcovid_hit_end_num_refuse + bcovid_assault_end_num_refuse + 
+                 factor(block_ids),
+               weights = weight, data = merged)
+
+bc_yell <- lm(bcovid_yelled_end_num ~ pooledF_WIG +reminder_10018 + 
+                bc19_yell_num + dc19_yell_num + bc19_hit_num + dc19_hit_num + bcovid_yelled_end_num_refuse +
+                factor(block_ids),
+              weights = weight, data = merged)
+
+bc_hit <- lm(bcovid_hit_end_num ~ pooledF_WIG +reminder_10018 + 
+               bc19_yell_num + dc19_yell_num + bc19_hit_num + dc19_hit_num + bcovid_hit_end_num_refuse +
+               factor(block_ids),
+             weights = weight, data = merged)
+bc_assa <- lm(bcovid_assault_end_num ~ pooledF_WIG +reminder_10018 + 
+                bc19_yell_num + dc19_yell_num + bc19_hit_num + dc19_hit_num + bcovid_assault_end_num_refuse +
+                factor(block_ids),
+              weights = weight, data = merged)
+
+
+l1 <- linearHypothesis(b_zscore, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(bc_yell, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(bc_hit, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(bc_assa, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4),
+            round(l4$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "bc19_yell_num", "dc19_yell_num", "bc19_hit_num", 
+              "dc19_hit_num", "bcovid_yelled_end_num_refuse", "bcovid_assault_end_num_refuse",
+              "dcovid_yelled_end_num_refuse", "bcovid_hit_end_num_refuse")
+
+
+Table22A <- stargazer(b_zscore, bc_yell, bc_hit, bc_assa,
+                           header=FALSE,          
+                           font.size="footnotesize",
+                           dep.var.labels.include = FALSE,
+                           table.placement = "H",
+                           column.labels=dep_var_re,
+                           covariate.labels= controls,
+                           omit = omit_var, 
+                           omit.stat=c("n", "f", "ser","adj.rsq"), 
+                           add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),                          
+                           column.sep.width = "0pt",
+                           title = "Treatment effects on domestic and sexual violence experienced before COVID-19",
+                           type = "latex")
+
+# Lagged DV
+
+b_zscore <- lm(zscore ~ pooledF_WIG +reminder_10018 + 
+                 bcovid_yelled_end_num_refuse +  bcovid_hit_end_num_refuse + bcovid_assault_end_num_refuse +
+                 factor(block_ids),
+               weights = weight, data = merged)
+
+bc_yell <- lm(bcovid_yelled_end_num ~ pooledF_WIG +reminder_10018 + 
+                bc19_yell_num + bcovid_yelled_end_num_refuse +
+                factor(block_ids),
+              weights = weight, data = merged)
+
+bc_hit <- lm(bcovid_hit_end_num ~ pooledF_WIG +reminder_10018 + 
+               bc19_hit_num + bcovid_hit_end_num_refuse +
+               factor(block_ids),
+             weights = weight, data = merged)
+
+bc_assa <- lm(bcovid_assault_end_num ~ pooledF_WIG +reminder_10018 + 
+                bcovid_assault_end_num_refuse +
+                factor(block_ids),
+              weights = weight, data = merged)
+
+
+l1 <- linearHypothesis(b_zscore, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(bc_yell, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(bc_hit, "pooledF_WIG = reminder_10018", digits = 3)
+l4 <- linearHypothesis(bc_assa, "pooledF_WIG = reminder_10018", digits = 3)
+
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4),
+            round(l4$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "bc19_yell_num", "bc19_hit_num", 
+              "bcovid_yelled_end_num_refuse", "bcovid_assault_end_num_refuse",
+              "bcovid_hit_end_num_refuse")
+
+
+Table22B <- stargazer(b_zscore, bc_yell, bc_hit, bc_assa,
+                           header=FALSE,          
+                           font.size="footnotesize",
+                           dep.var.labels.include = FALSE,
+                           table.placement = "H",
+                           column.labels=dep_var_re,
+                           covariate.labels= controls,
+                           omit = omit_var, 
+                           omit.stat=c("f", "ser","adj.rsq"), 
+                           add.lines = list(c("Control Mean", 0, rep_before_control), c("F, WI, WG = TV (p-value)", pvals1)),   
+                           column.sep.width = "0pt",
+                           title = "Treatment effects on domestic and sexual violence experienced before COVID-19",
+                           type = "latex")
+
+
+note.latex <- "\\multicolumn{5}{l} {\\parbox[t]{13.5cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Before COVID-19 heard of or experienced yelling, Before COVID-19 heard of or experienced hitting, 
+During COVID-19 heard of or experienced yelling, and During COVID-19 heard of or experienced hitting
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}}\\\\"
+Table22B[grepl("Note", Table22B)] <- note.latex
+
+
+
+# Knowledge, Behavior, and Reporting -------------------------------------------
+# Before COVID-19
+
+know_before <- merged[c("bcvovid_accessonline_end_num",
+                        "bcovid_contactorg_end_num")]
+
+know_mean <- round(colMeans(know_before[which(merged$control_10018 == 1),]), digits = 3)
+
+
+# calculating zscore
+zscore_bef <- scale(rowMeans(scale(know_before) %*% diag(c(1, 1))))
+
+merged$RT_bcovidAccess_zscore <- zscore_bef
+
+# refuse controls
+merged$bcvovid_accessonline_end_num_refuse <- ifelse(merged$bcvovid_accessonline_end == "I refuse to answer", 1, 0)
+merged$bcvovid_accessonline_end_num_refuse <- replace_na(merged$bcvovid_accessonline_end_num_refuse, 1)
+
+
+merged$bcovid_contactorg_end_num_refuse <- ifelse(merged$bcovid_contactorg_end == "I refuse to answer", 1, 0)
+merged$bcovid_contactorg_end_num_refuse <- replace_na(merged$bcovid_contactorg_end_num_refuse, 1)
+
+know_dep_var <- c("\\shortstack{Index of \\\\ (1,1) }", 
+                  "\\shortstack{Used online \\\\ resources}", 
+                  "\\shortstack{Contacted \\\\ organization}")
+
+
+# All family controls 
+zs <-lm(zscore_bef ~ pooledF_WIG  + reminder_10018 + 
+          know_online_valid_noaut_num + bc19_look_online_num + dc19_look_online_num + bc19_look_org_num + dc19_look_org_num +
+          bcvovid_accessonline_end_num_refuse + bcovid_contactorg_end_num_refuse +know_org_noaut_valid_num +know_online_nehad_num + 
+          know_org_nehad_num + 
+          factor(block_ids), 
+        weights = weight, 
+        data = merged)
+
+
+bc_accesson <-lm(bcvovid_accessonline_end_num ~ pooledF_WIG  + reminder_10018 + 
+                   know_online_valid_noaut_num + bc19_look_online_num + dc19_look_online_num + bc19_look_org_num + dc19_look_org_num +
+                   bcvovid_accessonline_end_num_refuse + know_org_noaut_valid_num +know_online_nehad_num + 
+                   know_org_nehad_num + 
+                   factor(block_ids), 
+                 weights = weight, 
+                 data = merged)
+
+
+bc_contactorg <-lm(bcovid_contactorg_end_num ~ pooledF_WIG  + reminder_10018 + 
+                     know_online_valid_noaut_num + bc19_look_online_num + dc19_look_online_num + bc19_look_org_num + dc19_look_org_num +
+                     bcovid_contactorg_end_num_refuse  + know_org_noaut_valid_num +know_online_nehad_num + 
+                     know_org_nehad_num + 
+                     factor(block_ids), 
+                   weights = weight, 
+                   data = merged)
+
+
+l1 <- linearHypothesis(zs, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(bc_accesson, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(bc_contactorg, "pooledF_WIG = reminder_10018", digits = 3)
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "know_online_valid_noaut_num", "bc19_look_online_num", "dc19_look_online_num", 
+              "bc19_look_org_num", "dc19_look_org_num", "bcvovid_accessonline_end_num_refuse", "know_org_noaut_valid_num", 
+              "know_online_nehad_num","know_org_nehad_num",
+              "dcovid_accessonline_end_num_refuse", "bcovid_contactorg_end_num_refuse", "dcovid_contactorg_end_num_refuse")
+
+Table23A <- stargazer(zs, bc_accesson, bc_contactorg,
+                                  header=FALSE,          
+                                  font.size="footnotesize",
+                                  dep.var.labels.include = FALSE,
+                                  table.placement = "H",
+                                  column.labels=know_dep_var,
+                                  covariate.labels= controls,
+                                  omit = omit_var, 
+                                  omit.stat=c("n", "f", "ser","adj.rsq"), 
+                                  add.lines = list(c("F, WI, WG = TV (p-value)", pvals1)),
+                                  column.sep.width = "25pt",
+                                  title = "Treatment effects on recent use of online resources and contact with an organization when responding to domestic and sexual violence before COVID-19",
+                                  type = "latex")
+
+
+# Only DV lagged control 
+
+zs <-lm(zscore_bef ~ pooledF_WIG  + reminder_10018 + 
+          bcvovid_accessonline_end_num_refuse + bcovid_contactorg_end_num_refuse +
+          factor(block_ids), 
+        weights = weight, 
+        data = merged)
+
+
+bc_accesson <-lm(bcvovid_accessonline_end_num ~ pooledF_WIG  + reminder_10018 + 
+                   + bcvovid_accessonline_end_num_refuse + bc19_look_online_num +
+                   factor(block_ids), 
+                 weights = weight, 
+                 data = merged)
+
+
+bc_contactorg <-lm(bcovid_contactorg_end_num ~ pooledF_WIG  + reminder_10018 + 
+                     bcovid_contactorg_end_num_refuse + bc19_look_org_num +
+                     factor(block_ids), 
+                   weights = weight, 
+                   data = merged)
+
+l1 <- linearHypothesis(zs, "pooledF_WIG = reminder_10018", digits = 3)
+l2 <- linearHypothesis(bc_accesson, "pooledF_WIG = reminder_10018", digits = 3)
+l3 <- linearHypothesis(bc_contactorg, "pooledF_WIG = reminder_10018", digits = 3)
+
+pvals1 <- c(round(l1$`Pr(>F)`[2], digits = 4), round(l2$`Pr(>F)`[2], digits = 4), round(l3$`Pr(>F)`[2], digits = 4))
+
+
+omit_var <- c("Constant","block_ids", "bcvovid_accessonline_end_num_refuse", 
+              "bcovid_contactorg_end_num_refuse",  "bc19_look_online_num", "bc19_look_org_num")
+
+Table23B <- stargazer(zs, bc_accesson, bc_contactorg,
+                            header=FALSE,          
+                            font.size="footnotesize",
+                            dep.var.labels.include = FALSE,
+                            table.placement = "H",
+                            column.labels=know_dep_var,
+                            covariate.labels= controls,
+                            omit = omit_var, 
+                            omit.stat=c("f", "ser","adj.rsq"), 
+                            add.lines = list(c("Control Mean", 0, know_mean), c("F, WI, WG = TV (p-value)", pvals1)),
+                            column.sep.width = "25pt",
+                            title = "Treatment effects on recent use of online resources and contact with an organization when responding to domestic and sexual violence before COVID-19",
+                            type = "latex")
+
+note.latex <- "\\multicolumn{4}{l} {\\parbox[t]{11.5cm}{ \\textit{Notes:} 
+We report estimates from WGLS regressions where the weights are in the inverse probability of treatment 
+assignment, including randomization block fixed effects. 
+Regressions in Panel A include controls for all baseline covariates in the outcome family: 
+Know online: other than ECWR, Know online: ECWR, Before COVID-19 used online resources, 
+During COVID-19 used online resources, Know organization: other than ECWR, Know organization: ECWR
+Before COVID-19 contacted organization, and During COVID-19 contacted organization.
+Regression in Panel B include the dependent variable at baseline (if available) as a control. 
+* denotes p$<$0.1, ** denotes p$<$0.05, and *** denotes p$<$0.01.}} \\\\"
+Table23B[grepl("Note", Table23B)] <- note.latex
+
+```
+
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table11A,Table11B, 6),"\n", file = 'Tables/Appendix B/Table11.tex')
+cat( Panel(Table11A,Table11B, 6) ) 
+
+```
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table12A,Table12B, 10, 1),"\n", file = 'Tables/Appendix B/Table12.tex')
+cat( Panel(Table12A,Table12B, 10, 1))
+
+```
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table13A,Table13B, 10),"\n", file = 'Tables/Appendix B/Table13.tex')
+cat( Panel(Table13A,Table13B, 10) )
+```
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat(Table14, "\n", file = 'Tables/Appendix B/Table14.tex')
+ cat( Table14 )
+```
+
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table15A,Table15B, 5),"\n", file = 'Tables/Appendix B/Table15.tex')
+cat( Panel(Table15A,Table15B, 5) )
+
+```
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table16A,Table16B, 4),"\n", file = 'Tables/Appendix B/Table16.tex')
+cat( Panel(Table16A,Table16B, 4) )
+
+```
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table17A,Table17B, 4),"\n", file = 'Tables/Appendix B/Table17.tex')
+cat( Panel(Table17A,Table17B, 4) )
+
+```
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table18A,Table18B, 4),"\n", file = 'Tables/Appendix B/Table18.tex')
+cat( Panel(Table18A,Table18B, 4) )
+
+```
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table19A,Table19B, 4),"\n", file = 'Tables/Appendix B/Table19.tex')
+cat( Panel(Table19A,Table19B, 4) )
+
+```
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table20A,Table20B, 5),"\n", file = 'Tables/Appendix B/Table20.tex')
+cat( Panel(Table20A,Table20B, 5) )
+
+```
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table21A,Table21B, 4),"\n", file = 'Tables/Appendix B/Table21.tex')
+cat( Panel(Table21A,Table21B, 4) )
+
+```
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table22A,Table22B, 5),"\n", file = 'Tables/Appendix B/Table22.tex')
+cat( Panel(Table22A,Table22B, 5) )
+
+```
+
+\clearpage
+```{r echo=FALSE, results="asis"}
+cat( Panel(Table23A,Table23B, 4),"\n", file = 'Tables/Appendix B/Table23.tex')
+cat( Panel(Table23A,Table23B, 4) )
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
